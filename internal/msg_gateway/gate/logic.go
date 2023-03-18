@@ -1,6 +1,7 @@
 package gate
 
 import (
+	"Open_IM/pkg/common/constant"
 	"bytes"
 	"encoding/gob"
 )
@@ -17,5 +18,19 @@ func (ws *WServer) msgParse(conn *UserConn, binaryMsg []byte) {
 		}
 		return
 	}
+	if m.SendID != conn.userID {
+		if err = conn.Close(); err != nil {
+			return
+		}
+	}
+	switch m.ReqIdentifier {
+	case constant.WSSendMsg:
+	}
+}
 
+// sendMsgReq - 发送消息请求
+func (ws *WServer) sendMsgReq(conn *UserConn, m *Req) {
+	sendMsgAllCountLock.Lock()
+	sendMsgAllCount++
+	sendMsgAllCountLock.Unlock()
 }
