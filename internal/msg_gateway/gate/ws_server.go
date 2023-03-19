@@ -2,6 +2,8 @@ package gate
 
 import (
 	"Open_IM/pkg/common/config"
+	"Open_IM/pkg/common/constant"
+	"Open_IM/pkg/common/log"
 	"Open_IM/pkg/utils"
 	"bytes"
 	"compress/gzip"
@@ -66,6 +68,7 @@ func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 	if isPass, compression := ws.headerCheck(w, r, operationID); isPass {
 		conn, err := ws.wsUpGrader.Upgrade(w, r, nil) //Conn is obtained through the upgraded escalator
 		if err != nil {
+			log.Error(operationID, "upgrade http conn err", err.Error(), query)
 			return
 		} else {
 			newConn := &UserConn{conn, new(sync.Mutex), utils.StringToInt32(query["platformID"][0]), compression, query["sendID"][0], query["token"][0], utils.Md5(conn.RemoteAddr().String() + "_" + strconv.Itoa(int(utils.GetCurrentTimestampByMill())))}
@@ -74,6 +77,7 @@ func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 			go ws.readMsg(newConn)
 		}
 	} else {
+		log.Error(operationID, "headerCheck failed ")
 	}
 }
 
@@ -133,6 +137,7 @@ func (ws *WServer) writeMsg(conn *UserConn, a int, msg []byte) error {
 func (ws *WServer) addUserConn(uid string, platformID int, conn *UserConn, token string, connID, operationID string) {
 	rwLock.Lock()
 	defer rwLock.Unlock()
+	log.Info(operationID, utils.GetSelfFuncName(), " args: ", uid, platformID, conn, token, "ip: ", conn.RemoteAddr().String())
 
 	// 用户上线回调
 
@@ -194,5 +199,18 @@ func (ws *WServer) delUserConn(conn *UserConn) {
 
 // headerCheck - 头部信息校验
 func (ws *WServer) headerCheck(w http.ResponseWriter, r *http.Request, operationID string) (isPass, compression bool) {
+	status := http.StatusUnauthorized
+	query := r.URL.Query()
+	if len(query["token"]) != 0 && len(query["sendID"]) != 0 && len(query["platformID"]) != 0 {
+
+	} else {
+		status = int(constant.ErrArgs.ErrCode)
+		log.Error(operationID, "Args err ", "query ", query)
+		w.Header().Set("Sec-Websocket-Version", "13")
+		errMsg := "args err, need token, sendID, platformID"
+		w.Header().Set("ws_err_msg", errMsg)
+		http.Error(w, errMsg, status)
+		return false, false
+	}
 	return true, false
 }

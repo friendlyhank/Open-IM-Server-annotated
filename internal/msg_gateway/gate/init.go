@@ -21,6 +21,8 @@ var (
 )
 
 func Init(rpcPort, wsPort int) {
+	rwLock = new(sync.RWMutex)
+	validate = validator.New()
 	ws.onInit(wsPort)
 	rpcSvr.onInit(rpcPort)
 }

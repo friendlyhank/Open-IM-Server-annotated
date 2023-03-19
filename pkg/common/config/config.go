@@ -19,12 +19,16 @@ type config struct {
 	}
 	// etcd相关配置
 	Etcd struct {
-		EtcdSchema string   `yaml:"etcdSchema"`
-		EtcdAddr   []string `yaml:"etcdAddr"`
+		StorageLocation string   `yaml:"storageLocation"`
+		EtcdSchema      string   `yaml:"etcdSchema"`
+		EtcdAddr        []string `yaml:"etcdAddr"`
 	}
 	// 日志相关配置
 	Log struct {
-		RemainLogLevel uint `yaml:"remainLogLevel"`
+		StorageLocation     string `yaml:"storageLocation"`
+		RotationTime        int    `yaml:"rotationTime"`
+		RemainRotationCount uint   `yaml:"remainRotationCount"`
+		RemainLogLevel      uint   `yaml:"remainLogLevel"`
 	}
 	// 长连接相关配置
 	LongConnSvr struct {
