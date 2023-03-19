@@ -13,6 +13,8 @@ import (
 	"time"
 )
 
+// im服务实现
+
 type UserConn struct {
 	*websocket.Conn             // 连接
 	w               *sync.Mutex // 锁
@@ -108,6 +110,23 @@ func (ws *WServer) readMsg(conn *UserConn) {
 		}
 		ws.msgParse(conn, msg)
 	}
+}
+
+// writeMsg - 发送消息
+func (ws *WServer) writeMsg(conn *UserConn, a int, msg []byte) error {
+	conn.w.Lock()
+	defer conn.w.Unlock()
+	if conn.IsCompress {
+		var buffer bytes.Buffer
+		gz := gzip.NewWriter(&buffer)
+		if _, err := gz.Write(msg); err != nil {
+		}
+		if err := gz.Close(); err != nil {
+		}
+		msg = buffer.Bytes()
+	}
+	conn.SetWriteDeadline(time.Now().Add(time.Duration(60) * time.Second))
+	return conn.WriteMessage(a, msg)
 }
 
 // addUserConn - 添加用户连接

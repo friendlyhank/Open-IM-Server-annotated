@@ -13,6 +13,15 @@ type config struct {
 	RpcPort struct {
 		OpenImMessageGatewayPort []int `yaml:"openImMessageGatewayPort"` // im代理端口
 	}
+	// rpc注册的服务
+	RpcRegisterName struct {
+		OpenImMsgName string `yaml:"openImMsgName"`
+	}
+	// etcd相关配置
+	Etcd struct {
+		EtcdSchema string   `yaml:"etcdSchema"`
+		EtcdAddr   []string `yaml:"etcdAddr"`
+	}
 	// 长连接相关配置
 	LongConnSvr struct {
 		WebsocketPort       []int `yaml:"openImWsPort"`        // 端口
