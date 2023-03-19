@@ -65,6 +65,7 @@ func (ws *WServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		operationID = utils.OperationIDGenerator()
 	}
+	log.Debug(operationID, utils.GetSelfFuncName(), " args: ", query)
 	if isPass, compression := ws.headerCheck(w, r, operationID); isPass {
 		conn, err := ws.wsUpGrader.Upgrade(w, r, nil) //Conn is obtained through the upgraded escalator
 		if err != nil {
@@ -86,34 +87,48 @@ func (ws *WServer) readMsg(conn *UserConn) {
 	for {
 		messageType, msg, err := conn.ReadMessage()
 		if messageType == websocket.PingMessage {
+			log.NewInfo("", "this is a  pingMessage")
 		}
 		if err != nil {
+			log.NewWarn("", "WS ReadMsg error ", " userIP", conn.RemoteAddr().String(), "userUid", "platform", "error", err.Error())
 			userCount--
 			ws.delUserConn(conn)
 			return
 		}
 		if messageType == websocket.CloseMessage {
+			log.NewWarn("", "WS receive error ", " userIP", conn.RemoteAddr().String(), "userUid", "platform", "error", string(msg))
 			userCount--
 			ws.delUserConn(conn)
 			return
 		}
+		log.NewDebug("", "size", utils.ByteSize(uint64(len(msg))))
 		// 开启数据压缩
 		if conn.IsCompress {
 			buff := bytes.NewBuffer(msg)
 			reader, err := gzip.NewReader(buff)
 			if err != nil {
+				log.NewWarn("", "un gzip read failed")
 				continue
 			}
 			msg, err = ioutil.ReadAll(reader)
 			if err != nil {
+				log.NewWarn("", "ReadAll failed")
 				continue
 			}
 			err = reader.Close()
 			if err != nil {
+				log.NewWarn("", "reader close failed")
 			}
 		}
 		ws.msgParse(conn, msg)
 	}
+}
+
+// SetWriteTimeout - 设置超时写方法
+func (ws *WServer) SetWriteTimeout(conn *UserConn, timeout int) {
+	conn.w.Lock()
+	defer conn.w.Unlock()
+	conn.SetWriteDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
 }
 
 // writeMsg - 发送消息
@@ -124,12 +139,22 @@ func (ws *WServer) writeMsg(conn *UserConn, a int, msg []byte) error {
 		var buffer bytes.Buffer
 		gz := gzip.NewWriter(&buffer)
 		if _, err := gz.Write(msg); err != nil {
+			return utils.Wrap(err, "")
 		}
 		if err := gz.Close(); err != nil {
+			return utils.Wrap(err, "")
 		}
 		msg = buffer.Bytes()
 	}
 	conn.SetWriteDeadline(time.Now().Add(time.Duration(60) * time.Second))
+	return conn.WriteMessage(a, msg)
+}
+
+// SetWriteTimeoutWriteMsg - 设置写消息超时
+func (ws *WServer) SetWriteTimeoutWriteMsg(conn *UserConn, a int, msg []byte, timeout int) error {
+	conn.w.Lock()
+	defer conn.w.Unlock()
+	conn.SetWriteDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
 	return conn.WriteMessage(a, msg)
 }
 
@@ -151,19 +176,28 @@ func (ws *WServer) addUserConn(uid string, platformID int, conn *UserConn, token
 			oldConnMap[platformID] = conns
 		}
 		ws.wsUserToConn[uid] = oldConnMap
+		log.Debug(operationID, "user not first come in, add conn ", uid, platformID, conn, oldConnMap)
 	} else {
 		i := make(map[int][]*UserConn)
 		var conns []*UserConn
 		conns = append(conns, conn)
 		i[platformID] = conns
 		ws.wsUserToConn[uid] = i
+		log.Debug(operationID, "user first come in, new user, conn", uid, platformID, conn, ws.wsUserToConn[uid])
 	}
+	// 计算用户的连接数
+	count := 0
+	for _, v := range ws.wsUserToConn {
+		count = count + len(v)
+	}
+	log.Debug(operationID, "WS Add operation", "", "wsUser added", ws.wsUserToConn, "connection_uid", uid, "connection_platform", constant.PlatformIDToName(platformID), "online_user_num", len(ws.wsUserToConn), "online_conn_num", count)
 }
 
 // delUserConn - 删除用户连接
 func (ws *WServer) delUserConn(conn *UserConn) {
 	rwLock.Lock()
 	defer rwLock.Unlock()
+	operationID := utils.OperationIDGenerator()
 	platform := int(conn.PlatformID)
 
 	if oldConnMap, ok := ws.wsUserToConn[conn.userID]; ok { // only recycle self conn
@@ -187,14 +221,36 @@ func (ws *WServer) delUserConn(conn *UserConn) {
 		if len(oldConnMap) == 0 {
 			delete(ws.wsUserToConn, conn.userID)
 		}
+		count := 0
+		for _, v := range ws.wsUserToConn {
+			count = count + len(v)
+		}
+		log.Debug(operationID, "WS delete operation", "", "wsUser deleted", ws.wsUserToConn, "disconnection_uid", conn.userID, "disconnection_platform", platform, "online_user_num", len(ws.wsUserToConn), "online_conn_num", count)
 	}
 
 	err := conn.Close()
 	if err != nil {
+		log.Error(operationID, " close err", "", "uid", conn.userID, "platform", platform)
 	}
 	if conn.PlatformID == 0 || conn.connID == "" {
+		log.NewWarn(operationID, utils.GetSelfFuncName(), "PlatformID or connID is null", conn.PlatformID, conn.connID)
 	}
+
 	// todo hank 用户下线回调
+}
+
+// getUserAllCons -获取用户所有的连接
+func (ws *WServer) getUserAllCons(uid string) map[int][]*UserConn {
+	rwLock.RLock()
+	defer rwLock.RUnlock()
+	if connMap, ok := ws.wsUserToConn[uid]; ok {
+		newConnMap := make(map[int][]*UserConn)
+		for k, v := range connMap {
+			newConnMap[k] = v
+		}
+		return newConnMap
+	}
+	return nil
 }
 
 // headerCheck - 头部信息校验
@@ -202,7 +258,7 @@ func (ws *WServer) headerCheck(w http.ResponseWriter, r *http.Request, operation
 	status := http.StatusUnauthorized
 	query := r.URL.Query()
 	if len(query["token"]) != 0 && len(query["sendID"]) != 0 && len(query["platformID"]) != 0 {
-
+		return true, compression
 	} else {
 		status = int(constant.ErrArgs.ErrCode)
 		log.Error(operationID, "Args err ", "query ", query)
@@ -212,5 +268,4 @@ func (ws *WServer) headerCheck(w http.ResponseWriter, r *http.Request, operation
 		http.Error(w, errMsg, status)
 		return false, false
 	}
-	return true, false
 }

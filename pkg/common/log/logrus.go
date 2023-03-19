@@ -2,7 +2,6 @@ package log
 
 import (
 	"Open_IM/pkg/common/config"
-	"bufio"
 	nested "github.com/antonfisher/nested-logrus-formatter"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/rifflock/lfshook"
@@ -32,12 +31,14 @@ func loggerInit(moduleName string) *Logger {
 	var logger = logrus.New()
 	// 设置日志级别
 	logger.SetLevel(logrus.Level(config.Config.Log.RemainLogLevel))
-	src, err := os.OpenFile(os.DevNull, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
-	if err != nil {
-		panic(err.Error())
-	}
-	writer := bufio.NewWriter(src)
-	logger.SetOutput(writer)
+	//src, err := os.OpenFile(os.DevNull, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	//if err != nil {
+	//	panic(err.Error())
+	//}
+	//writer := bufio.NewWriter(src)
+	//logger.SetOutput(writer)
+	// todo hank 先特殊处理不写入文件
+	logger.SetOutput(os.Stdout)
 	// 设置日志格式
 	logger.SetFormatter(&nested.Formatter{
 		TimestampFormat: "2006-01-02 15:04:05.000",
@@ -105,4 +106,32 @@ func Debug(OperationID string, args ...interface{}) {
 		"OperationID": OperationID,
 		"PID":         logger.Pid,
 	}).Debugln(args)
+}
+
+func NewInfo(OperationID string, args ...interface{}) {
+	logger.WithFields(logrus.Fields{
+		"OperationID": OperationID,
+		"PID":         logger.Pid,
+	}).Infoln(args)
+}
+
+func NewError(OperationID string, args ...interface{}) {
+	logger.WithFields(logrus.Fields{
+		"OperationID": OperationID,
+		"PID":         logger.Pid,
+	}).Errorln(args)
+}
+
+func NewDebug(OperationID string, args ...interface{}) {
+	logger.WithFields(logrus.Fields{
+		"OperationID": OperationID,
+		"PID":         logger.Pid,
+	}).Debugln(args)
+}
+
+func NewWarn(OperationID string, args ...interface{}) {
+	logger.WithFields(logrus.Fields{
+		"OperationID": OperationID,
+		"PID":         logger.Pid,
+	}).Warnln(args)
 }

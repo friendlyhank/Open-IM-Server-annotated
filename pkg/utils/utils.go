@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"github.com/pkg/errors"
 	"math/rand"
 	"runtime"
 	"strconv"
@@ -8,6 +9,19 @@ import (
 	"time"
 )
 
+// 核心工具类
+
+func Wrap(err error, message string) error {
+	return errors.Wrap(err, "==> "+printCallerNameAndLine()+message)
+}
+
+// printCallerNameAndLine-  打印当前调用的方法
+func printCallerNameAndLine() string {
+	pc, _, line, _ := runtime.Caller(2)
+	return runtime.FuncForPC(pc).Name() + "()@" + strconv.Itoa(line) + ": "
+}
+
+// GetSelfFuncName - 获取当前调用的方法文件
 func GetSelfFuncName() string {
 	pc, _, _, _ := runtime.Caller(1)
 	return cleanUpFuncName(runtime.FuncForPC(pc).Name())
