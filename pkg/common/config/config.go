@@ -11,6 +11,7 @@ var Config config
 type config struct {
 	// rpc相关端口
 	RpcPort struct {
+		OpenImMessagePort        []int `yaml:"openImMessagePort"`        // im消息端口
 		OpenImMessageGatewayPort []int `yaml:"openImMessageGatewayPort"` // im代理端口
 	}
 	// rpc注册的服务
