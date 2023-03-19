@@ -22,6 +22,8 @@ type config struct {
 		StorageLocation string   `yaml:"storageLocation"`
 		EtcdSchema      string   `yaml:"etcdSchema"`
 		EtcdAddr        []string `yaml:"etcdAddr"`
+		UserName        string   `yaml:"userName"`
+		Password        string   `yaml:"password"`
 	}
 	// 日志相关配置
 	Log struct {
