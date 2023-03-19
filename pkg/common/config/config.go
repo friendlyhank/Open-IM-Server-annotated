@@ -22,12 +22,20 @@ type config struct {
 		EtcdSchema string   `yaml:"etcdSchema"`
 		EtcdAddr   []string `yaml:"etcdAddr"`
 	}
+	// 日志相关配置
+	Log struct {
+		RemainLogLevel uint `yaml:"remainLogLevel"`
+	}
 	// 长连接相关配置
 	LongConnSvr struct {
 		WebsocketPort       []int `yaml:"openImWsPort"`        // 端口
 		WebsocketMaxConnNum int   `yaml:"websocketMaxConnNum"` // 最大连接数
 		WebsocketMaxMsgLen  int   `yaml:"websocketMaxMsgLen"`  // 最大读取消息
 		WebsocketTimeOut    int   `yaml:"websocketTimeOut"`    // socket连接超时时间
+	}
+	// Prometheus 监控
+	Prometheus struct {
+		MessageGatewayPrometheusPort []int `yaml:"messageGatewayPrometheusPort"`
 	}
 }
 

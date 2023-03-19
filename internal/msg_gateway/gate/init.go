@@ -28,4 +28,5 @@ func Init(rpcPort, wsPort int) {
 // Run -  运行im服务
 func Run() {
 	go ws.run()
+	go rpcSvr.run()
 }
