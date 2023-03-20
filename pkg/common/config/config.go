@@ -1,9 +1,16 @@
 package config
 
 import (
-	"fmt"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
+	"path/filepath"
+	"runtime"
+)
+
+var(
+	_, b, _, _ = runtime.Caller(0)
+	// Root folder of this project
+	Root = filepath.Join(filepath.Dir(b), "../../..")
 )
 
 var Config config
@@ -40,6 +47,11 @@ type config struct {
 		WebsocketMaxMsgLen  int   `yaml:"websocketMaxMsgLen"`  // 最大读取消息
 		WebsocketTimeOut    int   `yaml:"websocketTimeOut"`    // socket连接超时时间
 	}
+	// kafka相关配置
+	Kafka struct {
+		SASLUserName string `yaml:"SASLUserName"` // 用户
+		SASLPassword string `yaml:"SASLPassword"` // 密码
+	}
 	// Prometheus 监控
 	Prometheus struct {
 		MessageGatewayPrometheusPort []int `yaml:"messageGatewayPrometheusPort"`
@@ -47,8 +59,8 @@ type config struct {
 }
 
 func unmarshalConfig(config interface{}, configName string) {
-	// todo hank 先特殊处理
-	bytes, err := ioutil.ReadFile(fmt.Sprintf("/Users/hank/go/src/github.com/friendlyhank/Open-IM-Server-annotated/config/%s", configName))
+	// todo hank 先特殊处理,研究一下路径问题
+	bytes, err := ioutil.ReadFile(filepath.Join(Root, "config", configName))
 	if err != nil {
 		panic(err.Error() + configName)
 	}

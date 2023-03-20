@@ -14,4 +14,5 @@ func main() {
 	flag.Parse()
 	fmt.Println("start msg rpc server, port: ", *rpcPort, ", OpenIM version: ", constant.CurrentVersion, "\n")
 	rpcServer := msg.NewRpcChatServer(*rpcPort)
+	rpcServer.Run()
 }
