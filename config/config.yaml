@@ -11,6 +11,33 @@ etcd:
   password:
   secret:
 
+mysql:
+  dbMysqlAddress: [ 127.0.0.1:13306 ] #mysql地址 目前仅支持单机，默认即可
+  dbMysqlUserName:  #mysql用户名，建议修改
+  dbMysqlPassword:  # mysql密码，建议修改
+  dbMysqlDatabaseName: openIM_v2 #默认即可
+  dbTableName: eMsg #默认即可
+
+kafka:
+  SASLUserName:
+  SASLPassword:
+  ws2mschat:
+    addr: [ 127.0.0.1:9092 ] #kafka配置，默认即可
+    topic: "ws2ms_chat" #用于mongo和mysql保存消息
+
+#---------------Internal service configuration---------------------#
+
+# The service ip default is empty,
+# automatically obtain the machine's valid network card ip as the service ip,
+# otherwise the configuration ip is preferred
+#如果是单机模式，用0.0.0.0或者不填，默认即可
+serverip: 0.0.0.0
+
+#作为rpc时，注册到etcd的地址，单机默认即可，如果是集群部署，需要修改（具体使用内网地址还是外网地址，要依情况而定，目的是api/gateway能访问到）
+rpcRegisterIP:
+#默认即可
+listenIP: 0.0.0.0
+
 rpcport: #rpc服务端口 默认即可
   openImMessageGatewayPort: [ 10140 ]
 

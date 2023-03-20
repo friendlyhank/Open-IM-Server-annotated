@@ -7,7 +7,7 @@ import (
 	"runtime"
 )
 
-var(
+var (
 	_, b, _, _ = runtime.Caller(0)
 	// Root folder of this project
 	Root = filepath.Join(filepath.Dir(b), "../../..")
@@ -16,6 +16,8 @@ var(
 var Config config
 
 type config struct {
+	RpcRegisterIP string `yaml:"rpcRegisterIP"` // rpc注册ip
+	ListenIP      string `yaml:"listenIP"`      // 各个rpc服务监听的ip
 	// rpc相关端口
 	RpcPort struct {
 		OpenImMessagePort        []int `yaml:"openImMessagePort"`        // im消息端口
@@ -51,6 +53,10 @@ type config struct {
 	Kafka struct {
 		SASLUserName string `yaml:"SASLUserName"` // 用户
 		SASLPassword string `yaml:"SASLPassword"` // 密码
+		Ws2mschat    struct {
+			Addr  []string `yaml:"addr"`  // 地址
+			Topic string   `yaml:"topic"` // 对应topic
+		}
 	}
 	// Prometheus 监控
 	Prometheus struct {

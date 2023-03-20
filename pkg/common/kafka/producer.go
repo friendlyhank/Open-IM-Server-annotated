@@ -2,7 +2,11 @@ package kafka
 
 import (
 	"Open_IM/pkg/common/config"
+	log "Open_IM/pkg/common/log"
+	"Open_IM/pkg/utils"
+	"errors"
 	"github.com/Shopify/sarama"
+	"github.com/golang/protobuf/proto"
 )
 
 // kafa生产者
@@ -36,4 +40,30 @@ func NewKafkaProducer(addr []string, topic string) *Producer {
 	}
 	p.producer = producer
 	return &p
+}
+
+// SendMessage - kafka发送消息
+func (p *Producer) SendMessage(m proto.Message, key string, operationID string) (int32, int64, error) {
+	log.Info(operationID, "SendMessage", "key ", key, m.String(), p.producer)
+	kMsg := &sarama.ProducerMessage{}
+	kMsg.Topic = p.topic
+	kMsg.Key = sarama.StringEncoder(key)
+	bMsg, err := proto.Marshal(m)
+	if err != nil {
+		log.Error(operationID, "", "proto marshal err = %s", err.Error())
+		return -1, -1, err
+	}
+	if len(bMsg) == 0 {
+		log.Error(operationID, "len(bMsg) == 0 ")
+		return 0, 0, errors.New("len(bMsg) == 0 ")
+	}
+	kMsg.Value = sarama.ByteEncoder(bMsg)
+	log.Info(operationID, "ByteEncoder SendMessage begin", "key ", kMsg, p.producer, "len: ", kMsg.Key.Length(), kMsg.Value.Length())
+	if kMsg.Key.Length() == 0 || kMsg.Value.Length() == 0 {
+		log.Error(operationID, "kMsg.Key.Length() == 0 || kMsg.Value.Length() == 0 ", kMsg)
+		return -1, -1, errors.New("key or value == 0")
+	}
+	a, b, c := p.producer.SendMessage(kMsg)
+	log.Info(operationID, "ByteEncoder SendMessage end", "key ", kMsg.Key.Length(), kMsg.Value.Length(), p.producer)
+	return a, b, utils.Wrap(c, "")
 }
