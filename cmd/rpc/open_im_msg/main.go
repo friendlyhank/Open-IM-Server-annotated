@@ -1,4 +1,4 @@
-package open_im_msg
+package main
 
 import (
 	"Open_IM/internal/rpc/msg"

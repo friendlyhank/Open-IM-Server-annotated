@@ -39,6 +39,7 @@ rpcRegisterIP:
 listenIP: 0.0.0.0
 
 rpcport: #rpc服务端口 默认即可
+  openImMessagePort: [ 10130 ] # rpc im消息端口
   openImMessageGatewayPort: [ 10140 ]
 
 rpcregistername: #rpc注册服务名，默认即可
