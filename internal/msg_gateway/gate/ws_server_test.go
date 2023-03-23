@@ -1,6 +1,7 @@
 package gate
 
 import (
+	"Open_IM/pkg/common/constant"
 	open_im_sdk "Open_IM/pkg/proto/sdk_ws"
 	"bytes"
 	"encoding/gob"
@@ -24,6 +25,7 @@ func Test_WServerSendMsg(t *testing.T) {
 	// 发送消息结构体
 	msgData := &open_im_sdk.MsgData{
 		SendID: "1",
+		SessionType:constant.SingleChatType,
 	}
 
 	d, _ := proto.Marshal(msgData)
