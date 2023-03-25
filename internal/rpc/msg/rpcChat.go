@@ -67,6 +67,8 @@ func (rpc *rpcChat) Run() {
 	defer srv.GracefulStop()
 
 	rpcRegisterIP := config.Config.RpcRegisterIP
+
+	// 注册msg相关服务
 	msg.RegisterMsgServer(srv, rpc)
 	if config.Config.RpcRegisterIP == "" {
 		rpcRegisterIP, err = utils.GetLocalIP()

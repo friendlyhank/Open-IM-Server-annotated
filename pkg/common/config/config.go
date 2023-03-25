@@ -21,11 +21,13 @@ type config struct {
 	// rpc相关端口
 	RpcPort struct {
 		OpenImMessagePort        []int `yaml:"openImMessagePort"`        // im消息端口
-		OpenImMessageGatewayPort []int `yaml:"openImMessageGatewayPort"` // im代理端口
+		OpenImMessageGatewayPort []int `yaml:"openImMessageGatewayPort"` // im网关端口
+		OpenImPushPort           []int `yaml:"openImPushPort"`           // im消息推送端口
 	}
 	// rpc注册的服务
 	RpcRegisterName struct {
-		OpenImMsgName string `yaml:"openImMsgName"`
+		OpenImMsgName  string `yaml:"openImMsgName"`  // im消息名称
+		OpenImPushName string `yaml:"openImPushName"` // 推送名称
 	}
 	// etcd相关配置
 	Etcd struct {

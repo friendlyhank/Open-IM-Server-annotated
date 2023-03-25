@@ -5,9 +5,10 @@ const (
 	WSSendMsg = 1003 // 发送消息
 
 	//SessionType
-	SingleChatType       = 1 // 单聊消息
+	SingleChatType = 1 // 单聊消息
+	GroupChatType  = 2 // 群聊消息
 
-	OnlineStatus  = "online" // 在线状态
+	OnlineStatus  = "online"  // 在线状态
 	OfflineStatus = "offline" // 离线状态
 )
 
