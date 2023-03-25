@@ -1,5 +1,9 @@
 package msg_transfer
 
-func Init() {
+var (
+	persistentCH PersistentConsumerHandler
+)
 
+func Init() {
+	persistentCH.Init() // ws2mschat save mysql
 }

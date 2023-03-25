@@ -59,6 +59,11 @@ type config struct {
 			Addr  []string `yaml:"addr"`  // 地址
 			Topic string   `yaml:"topic"` // 对应topic
 		}
+		// 消费者组
+		ConsumerGroupID struct {
+			MsgToMongo string `yaml:"msgToMongo"` // 持久化消息到mongo
+			MsgToMySql string `yaml:"msgToMySql"` // 持久化消息到mysql
+		}
 	}
 	// Prometheus 监控
 	Prometheus struct {
