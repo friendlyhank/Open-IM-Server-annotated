@@ -1,7 +1,7 @@
 package msg_transfer
 
 /*
- *  消费kafka消息并持久化到mongo或mysql
+ *  消费kafka消息并持久化到mysql
  */
 
 import (
@@ -38,6 +38,12 @@ func (pc *PersistentConsumerHandler) handleChatWs2Mysql(cMsg *sarama.ConsumerMes
 	}
 	log.Debug(msgFromMQ.OperationID, "proto.Unmarshal MsgDataToMQ", msgFromMQ.String())
 	//Control whether to store history messages (mysql)
+
+	log.NewInfo(msgFromMQ.OperationID, "msg_transfer msg persisting", string(msg))
+	if err = im_mysql_msg_model.InsertMessageToChatLog(msgFromMQ); err != nil {
+		log.NewError(msgFromMQ.OperationID, "Message insert failed", "err", err.Error(), "msg", msgFromMQ.String())
+		return
+	}
 }
 
 func (PersistentConsumerHandler) Setup(_ sarama.ConsumerGroupSession) error   { return nil }

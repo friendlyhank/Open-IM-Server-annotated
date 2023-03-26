@@ -16,7 +16,10 @@ mysql:
   dbMysqlUserName:  #mysql用户名，建议修改
   dbMysqlPassword:  # mysql密码，建议修改
   dbMysqlDatabaseName: openIM_v2 #默认即可
-  dbTableName: eMsg #默认即可
+  dbMaxOpenConns: 100 # 最大开启连接
+  dbMaxIdleConns: 10 # 空闲连接数
+  dbMaxLifeTime: 5 #连接存活时间
+  logLevel: 1 #1=slient 2=error 3=warn 4=info
 
 kafka:
   SASLUserName:
@@ -24,6 +27,9 @@ kafka:
   ws2mschat:
     addr: [ 127.0.0.1:9092 ] #kafka配置，默认即可
     topic: "ws2ms_chat" #用于mongo和mysql保存消息
+  consumergroupid:
+    msgToTransfer: mongo
+    msgToMySql: mysql
 
 #---------------Internal service configuration---------------------#
 
@@ -59,4 +65,4 @@ longconnsvr:
 
 # prometheus每个服务监听的端口数量需要和rpc port保持一致
 prometheus:
-  messageGatewayPrometheusPort: [ 20140 ]
+  messageGatewayPrometheusPort: [ 20140 ] ## 消息网关prometheus的端口

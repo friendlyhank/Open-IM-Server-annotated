@@ -24,14 +24,15 @@ func (rpc *rpcChat) SendMsg(_ context.Context, pb *pbChat.SendMsgReq) (*pbChat.S
 	switch pb.MsgData.SessionType {
 	case constant.SingleChatType: // 单聊消息
 		t1 = time.Now()
+		// todo hank 这里sendId和用recvId的作用和区别
+		err1 := rpc.sendMsgToWriter(&msgToMQSingle, msgToMQSingle.MsgData.RecvID, constant.OnlineStatus)
+		log.Info(pb.OperationID, "sendMsgToWriter ", " cost time: ", time.Since(t1))
+		if err1 != nil {
+			log.NewError(msgToMQSingle.OperationID, "kafka send msg err :RecvID", msgToMQSingle.MsgData.RecvID, msgToMQSingle.String(), err1.Error())
+			return returnMsg(&replay, pb, 201, "kafka send msg err", "", 0)
+		}
+
 		if msgToMQSingle.MsgData.SendID != msgToMQSingle.MsgData.RecvID { //Filter messages sent to yourself
-			t1 = time.Now()
-			err2 := rpc.sendMsgToWriter(&msgToMQSingle, msgToMQSingle.MsgData.SendID, constant.OnlineStatus)
-			log.Info(pb.OperationID, "sendMsgToWriter ", " cost time: ", time.Since(t1))
-			if err2 != nil {
-				log.NewError(msgToMQSingle.OperationID, "kafka send msg err:SendID", msgToMQSingle.MsgData.SendID, msgToMQSingle.String())
-				return returnMsg(&replay, pb, 201, "kafka send msg err", "", 0)
-			}
 		}
 	case constant.GroupChatType: // 群聊消息
 	default:

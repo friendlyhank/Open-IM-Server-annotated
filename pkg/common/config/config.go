@@ -18,6 +18,17 @@ var Config config
 type config struct {
 	RpcRegisterIP string `yaml:"rpcRegisterIP"` // rpc注册ip
 	ListenIP      string `yaml:"listenIP"`      // 各个rpc服务监听的ip
+	// mysql 相关
+	Mysql struct {
+		DBAddress      []string `yaml:"dbMysqlAddress"`      // 地址
+		DBUserName     string   `yaml:"dbMysqlUserName"`     // 用户名
+		DBPassword     string   `yaml:"dbMysqlPassword"`     // 密码
+		DBDatabaseName string   `yaml:"dbMysqlDatabaseName"` // 数据库名
+		DBMaxOpenConns int      `yaml:"dbMaxOpenConns"`      // 最大开启连接
+		DBMaxIdleConns int      `yaml:"dbMaxIdleConns"`      // 最大空闲连接
+		DBMaxLifeTime  int      `yaml:"dbMaxLifeTime"`       // 连接存活时间
+		LogLevel       int      `yaml:"logLevel"`            // 日志等级
+	}
 	// rpc相关端口
 	RpcPort struct {
 		OpenImMessagePort        []int `yaml:"openImMessagePort"`        // im消息端口
@@ -42,7 +53,7 @@ type config struct {
 		StorageLocation     string `yaml:"storageLocation"`
 		RotationTime        int    `yaml:"rotationTime"`
 		RemainRotationCount uint   `yaml:"remainRotationCount"`
-		RemainLogLevel      uint   `yaml:"remainLogLevel"`
+		RemainLogLevel      uint   `yaml:"remainLogLevel"` // 日志等级
 	}
 	// 长连接相关配置
 	LongConnSvr struct {
@@ -61,6 +72,7 @@ type config struct {
 		}
 		// 消费者组
 		ConsumerGroupID struct {
+			MsgToRedis string `yaml:"msgToTransfer"`
 			MsgToMongo string `yaml:"msgToMongo"` // 持久化消息到mongo
 			MsgToMySql string `yaml:"msgToMySql"` // 持久化消息到mysql
 		}
