@@ -83,3 +83,7 @@ func initMysqlDB() {
 	}
 	DB.MysqlDB.db = db
 }
+
+func (m *mysqlDB) DefaultGormDB() *gorm.DB {
+	return DB.MysqlDB.db
+}

@@ -6,6 +6,7 @@ package msg_transfer
 
 import (
 	"Open_IM/pkg/common/config"
+	"Open_IM/pkg/common/db/mysql_model/im_mysql_msg_model"
 	kfk "Open_IM/pkg/common/kafka"
 	"Open_IM/pkg/common/log"
 	pbMsg "Open_IM/pkg/proto/msg"
