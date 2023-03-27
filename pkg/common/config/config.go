@@ -66,9 +66,15 @@ type config struct {
 	Kafka struct {
 		SASLUserName string `yaml:"SASLUserName"` // 用户
 		SASLPassword string `yaml:"SASLPassword"` // 密码
-		Ws2mschat    struct {
+		// 消息发送topic
+		Ws2mschat struct {
 			Addr  []string `yaml:"addr"`  // 地址
 			Topic string   `yaml:"topic"` // 对应topic
+		}
+		// 消费Ws2mschat的时候会触发推送，如果失败，则重新加入到推送队列
+		Ms2pschat struct {
+			Addr  []string `yaml:"addr"`
+			Topic string   `yaml:"topic"`
 		}
 		// 消费者组
 		ConsumerGroupID struct {

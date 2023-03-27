@@ -24,9 +24,12 @@ mysql:
 kafka:
   SASLUserName:
   SASLPassword:
-  ws2mschat:
+  ws2mschat: #消息发送topic
     addr: [ 127.0.0.1:9092 ] #kafka配置，默认即可
     topic: "ws2ms_chat" #用于mongo和mysql保存消息
+  ms2pschat: # 消息推送的topic
+    addr: [ 127.0.0.1:9092 ] #kafka配置，默认即可
+    topic: "ms2ps_chat" #消息push
   consumergroupid:
     msgToTransfer: mongo
     msgToMySql: mysql
