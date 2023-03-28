@@ -37,8 +37,9 @@ type config struct {
 	}
 	// rpc注册的服务
 	RpcRegisterName struct {
-		OpenImMsgName  string `yaml:"openImMsgName"`  // im消息名称
-		OpenImPushName string `yaml:"openImPushName"` // 推送名称
+		OpenImMsgName   string `yaml:"openImMsgName"`   // im消息名称
+		OpenImPushName  string `yaml:"openImPushName"`  // 推送名称
+		OpenImRelayName string `yaml:"openImRelayName"` // 消息转发,真正发送数据服务
 	}
 	// etcd相关配置
 	Etcd struct {

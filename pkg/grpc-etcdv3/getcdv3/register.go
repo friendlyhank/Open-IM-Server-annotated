@@ -26,6 +26,11 @@ func GetPrefix(schema, serviceName string) string {
 	return fmt.Sprintf("%s:///%s/", schema, serviceName)
 }
 
+// "%s:///%s"
+func GetPrefix4Unique(schema, serviceName string) string {
+	return fmt.Sprintf("%s:///%s", schema, serviceName)
+}
+
 // RegisterEtcd - 注册etcd服务
 func RegisterEtcd(schema, etcdAddr, myHost string, myPort int, serviceName string, ttl int) error {
 	operationID := utils.OperationIDGenerator()

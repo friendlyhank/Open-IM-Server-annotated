@@ -199,3 +199,99 @@ func (r *Resolver) watch(prefix string, addrList []resolver.Address) {
 		}
 	}
 }
+
+var Conn4UniqueList []*grpc.ClientConn // 消息网关所有的连接
+
+// GetDefaultGatewayConn4Unique - 获取消息网关所有的连接
+func GetDefaultGatewayConn4Unique(schema, etcdaddr, operationID string) []*grpc.ClientConn {
+	// todo hank 为什么要锁
+	Conn4UniqueList = getConn4Unique(schema, etcdaddr, config.Config.RpcRegisterName.OpenImRelayName)
+	go func() {
+		for {
+			select {
+			case <-time.After(time.Second * time.Duration(30)):
+				Conn4UniqueList = getConn4Unique(schema, etcdaddr, config.Config.RpcRegisterName.OpenImRelayName)
+			}
+		}
+	}()
+	var clientConnList []*grpc.ClientConn
+	for _, v := range Conn4UniqueList {
+		clientConnList = append(clientConnList, v)
+	}
+	grpcConns := clientConnList
+	if len(grpcConns) > 0 {
+		return grpcConns
+	}
+	log.NewWarn(operationID, utils.GetSelfFuncName(), " len(grpcConns) == 0 ", schema, etcdaddr, config.Config.RpcRegisterName.OpenImRelayName)
+	grpcConns = GetDefaultGatewayConn4UniqueFromcfg(operationID)
+	log.NewDebug(operationID, utils.GetSelfFuncName(), config.Config.RpcRegisterName.OpenImRelayName, grpcConns)
+	return grpcConns
+}
+
+// GetDefaultGatewayConn4UniqueFromcfg - 从配置中获取消息网关连接
+func GetDefaultGatewayConn4UniqueFromcfg(operationID string) []*grpc.ClientConn {
+	rpcRegisterIP := config.Config.RpcRegisterIP
+	var err error
+	if config.Config.RpcRegisterIP == "" {
+		rpcRegisterIP, err = utils.GetLocalIP()
+		if err != nil {
+			log.Error("", "GetLocalIP failed ", err.Error())
+			return nil
+		}
+	}
+	var conns []*grpc.ClientConn
+	configPortList := config.Config.RpcPort.OpenImMessageGatewayPort
+	for _, port := range configPortList {
+		target := rpcRegisterIP + ":" + utils.Int32ToString(int32(port))
+		log.Info(operationID, "rpcRegisterIP ", rpcRegisterIP, " port ", configPortList, " grpc target: ", target, " serviceName: ", "msgGateway")
+		conn, err := grpc.Dial(target, grpc.WithInsecure())
+		if err != nil {
+			log.Error(operationID, "grpc.Dail failed ", err.Error())
+			continue
+		}
+		conns = append(conns, conn)
+	}
+	return conns
+}
+
+// getConn4Unique - 根据服务名称获取所有的rpc连接
+func getConn4Unique(schema, etcdaddr, servicename string) []*grpc.ClientConn {
+	gEtcdCli, err := clientv3.New(clientv3.Config{Endpoints: strings.Split(etcdaddr, ",")})
+	if err != nil {
+		log.Error("clientv3.New failed", err.Error())
+		return nil
+	}
+
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	//     "%s:///%s"
+	prefix := GetPrefix4Unique(schema, servicename)
+
+	resp, err := gEtcdCli.Get(ctx, prefix, clientv3.WithPrefix())
+	//  "%s:///%s:ip:port"   -> %s:ip:port
+	allService := make([]string, 0)
+	if err == nil {
+		for i := range resp.Kvs {
+			k := string(resp.Kvs[i].Key)
+
+			b := strings.LastIndex(k, "///")
+			k1 := k[b+len("///"):]
+
+			e := strings.Index(k1, "/")
+			k2 := k1[:e]
+			allService = append(allService, k2)
+		}
+	} else {
+		gEtcdCli.Close()
+		//log.Error("gEtcdCli.Get failed", err.Error())
+		return nil
+	}
+	gEtcdCli.Close()
+
+	allConn := make([]*grpc.ClientConn, 0)
+	for _, v := range allService {
+		r := getConn(schema, etcdaddr, v, "0")
+		allConn = append(allConn, r)
+	}
+
+	return allConn
+}
