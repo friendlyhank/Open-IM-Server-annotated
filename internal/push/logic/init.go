@@ -10,13 +10,18 @@ import (
  */
 
 var (
-	producer *kafka.Producer
+	rpcServer RPCServer
+	producer  *kafka.Producer
 )
 
 func Init(rpcPort int) {
-
+	rpcServer.Init(rpcPort)
 }
 
 func init() {
 	producer = kafka.NewKafkaProducer(config.Config.Kafka.Ws2mschat.Addr, config.Config.Kafka.Ws2mschat.Topic)
+}
+
+func Run() {
+	go rpcServer.run()
 }
