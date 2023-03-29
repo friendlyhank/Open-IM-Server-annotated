@@ -6,6 +6,7 @@ import (
 	"Open_IM/pkg/grpc-etcdv3/getcdv3"
 	pbRelay "Open_IM/pkg/proto/relay"
 	"Open_IM/pkg/utils"
+	"context"
 	"google.golang.org/grpc"
 	"net"
 	"strconv"
@@ -62,4 +63,39 @@ func (r *RPCServer) run() {
 		log.Error("", "push message rpc listening err", "", "err", err.Error())
 		return
 	}
+	err = srv.Serve(listener)
+	if err != nil {
+		log.Error("", "push message rpc listening err", "", "err", err.Error())
+		return
+	}
+}
+
+func (r *RPCServer) OnlinePushMsg(_ context.Context, in *pbRelay.OnlinePushMsgReq) (*pbRelay.OnlinePushMsgResp, error) {
+	return nil, nil
+}
+
+// GetUsersOnlineStatus - 获取用户在线状态
+func (r *RPCServer) GetUsersOnlineStatus(_ context.Context, req *pbRelay.GetUsersOnlineStatusReq) (*pbRelay.GetUsersOnlineStatusResp, error) {
+	return nil, nil
+}
+
+func (r *RPCServer) SuperGroupOnlineBatchPushOneMsg(_ context.Context, req *pbRelay.OnlineBatchPushOneMsgReq) (*pbRelay.OnlineBatchPushOneMsgResp, error) {
+	return nil, nil
+}
+
+func (r *RPCServer) SuperGroupBackgroundOnlinePush(_ context.Context, req *pbRelay.OnlineBatchPushOneMsgReq) (*pbRelay.OnlineBatchPushOneMsgResp, error) {
+	return nil, nil
+}
+
+func (r *RPCServer) OnlineBatchPushOneMsg(_ context.Context, req *pbRelay.OnlineBatchPushOneMsgReq) (*pbRelay.OnlineBatchPushOneMsgResp, error) {
+	return nil, nil
+}
+
+// KickUserOffline - 把用户踢下线
+func (r *RPCServer) KickUserOffline(_ context.Context, req *pbRelay.KickUserOfflineReq) (*pbRelay.KickUserOfflineResp, error) {
+	return nil, nil
+}
+
+func (r *RPCServer) MultiTerminalLoginCheck(ctx context.Context, req *pbRelay.MultiTerminalLoginCheckReq) (*pbRelay.MultiTerminalLoginCheckResp, error) {
+	return nil, nil
 }

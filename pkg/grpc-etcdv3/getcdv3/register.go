@@ -31,6 +31,12 @@ func GetPrefix4Unique(schema, serviceName string) string {
 	return fmt.Sprintf("%s:///%s", schema, serviceName)
 }
 
+// "%s:///%s/" ->  "%s:///%s:ip:port" todo hank 这里servername为什么要特殊处理
+func RegisterEtcd4Unique(schema, etcdAddr, myHost string, myPort int, serviceName string, ttl int) error {
+	serviceName = serviceName + ":" + net.JoinHostPort(myHost, strconv.Itoa(myPort))
+	return RegisterEtcd(schema, etcdAddr, myHost, myPort, serviceName, ttl)
+}
+
 // RegisterEtcd - 注册etcd服务
 func RegisterEtcd(schema, etcdAddr, myHost string, myPort int, serviceName string, ttl int) error {
 	operationID := utils.OperationIDGenerator()
