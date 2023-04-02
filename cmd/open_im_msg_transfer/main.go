@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Open_IM/internal/msg_transfer/logic"
 	"Open_IM/pkg/common/constant"
 	"Open_IM/pkg/common/log"
 	"flag"
@@ -12,4 +13,5 @@ func main() {
 	wg.Add(1)
 	flag.Parse()
 	log.NewPrivateLog(constant.LogFileName)
+	logic.Init()
 }

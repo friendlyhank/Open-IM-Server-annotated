@@ -1,4 +1,4 @@
-package msg_transfer
+package logic
 
 /*
  *  消费kafka消息并持久化到mysql

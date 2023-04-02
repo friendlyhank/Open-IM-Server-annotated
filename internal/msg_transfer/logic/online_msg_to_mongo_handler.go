@@ -1,4 +1,4 @@
-package msg_transfer
+package logic
 
 import (
 	kfk "Open_IM/pkg/common/kafka"
