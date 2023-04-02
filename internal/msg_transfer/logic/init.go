@@ -5,6 +5,9 @@ import (
 	"Open_IM/pkg/common/kafka"
 )
 
+const ConsumerMsgs = 3 // 消费消息指令
+const ChannelNum = 100 // 设置channel数量
+
 var (
 	persistentCH PersistentConsumerHandler         // 持久化数据mysql
 	historyCH    OnlineHistoryRedisConsumerHandler //

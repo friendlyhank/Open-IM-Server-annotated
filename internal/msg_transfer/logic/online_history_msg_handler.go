@@ -7,39 +7,39 @@ import (
 	"Open_IM/pkg/grpc-etcdv3/getcdv3"
 	pbMsg "Open_IM/pkg/proto/msg"
 	pbPush "Open_IM/pkg/proto/push"
+	"Open_IM/pkg/utils"
 	"context"
 	"github.com/Shopify/sarama"
-	"github.com/golang/protobuf/proto"
 	"strings"
+	"sync"
+	"time"
 )
 
 type fcb func(cMsg *sarama.ConsumerMessage, msgKey string, sess sarama.ConsumerGroupSession)
 
+// 处理指令和对应的值
+type Cmd2Value struct {
+	Cmd   int
+	Value interface{}
+}
+
+// 目标channel值
+type TriggerChannelValue struct {
+	triggerID string
+	cmsgList  []*sarama.ConsumerMessage
+}
+
 type OnlineHistoryRedisConsumerHandler struct {
 	msgHandle            map[string]fcb
 	historyConsumerGroup *kfk.MConsumerGroup
+	chArrays             [ChannelNum]chan Cmd2Value
+	msgDistributionCh    chan Cmd2Value // 分发的channel
 }
 
 func (och *OnlineHistoryRedisConsumerHandler) Init() {
-	och.msgHandle[config.Config.Kafka.Ws2mschat.Topic] = och.handleChatWs2MongoLowReliability
 	och.historyConsumerGroup = kfk.NewMConsumerGroup(&kfk.MConsumerGroupConfig{KafkaVersion: sarama.V2_0_0_0},
 		[]string{config.Config.Kafka.Ws2mschat.Topic},
 		config.Config.Kafka.Ws2mschat.Addr, config.Config.Kafka.ConsumerGroupID.MsgToRedis)
-}
-
-func (och *OnlineHistoryRedisConsumerHandler) handleChatWs2MongoLowReliability(cMsg *sarama.ConsumerMessage, msgKey string, sess sarama.ConsumerGroupSession) {
-	msg := cMsg.Value
-	msgFromMQ := pbMsg.MsgDataToMQ{}
-	err := proto.Unmarshal(msg, &msgFromMQ)
-	if err != nil {
-		log.Error("msg_transfer Unmarshal msg err", "", "msg", string(msg), "err", err.Error())
-		return
-	}
-	operationID := msgFromMQ.OperationID
-	log.NewInfo(operationID, "msg come mongo!!!", "", "msg", string(msg))
-	//Control whether to store offline messages (mongo)
-
-	go sendMessageToPush(&msgFromMQ, msgKey)
 }
 
 func (OnlineHistoryRedisConsumerHandler) Setup(_ sarama.ConsumerGroupSession) error   { return nil }
@@ -47,7 +47,43 @@ func (OnlineHistoryRedisConsumerHandler) Cleanup(_ sarama.ConsumerGroupSession) 
 
 func (och *OnlineHistoryRedisConsumerHandler) ConsumeClaim(sess sarama.ConsumerGroupSession,
 	claim sarama.ConsumerGroupClaim) error { // a instance in the consumer group
+	rwLock := new(sync.RWMutex)
 	cMsg := make([]*sarama.ConsumerMessage, 0, 1000)
+	log.NewDebug("", "online new session msg come", claim.HighWaterMarkOffset(), claim.Topic(), claim.Partition())
+	t := time.NewTicker(time.Duration(100) * time.Millisecond)
+	var triggerID string
+	go func() {
+		for {
+			select {
+			case <-t.C:
+				if len(cMsg) > 0 {
+					rwLock.Lock()
+					ccMsg := make([]*sarama.ConsumerMessage, 0, 1000)
+					for _, v := range cMsg {
+						ccMsg = append(ccMsg, v)
+					}
+					cMsg = make([]*sarama.ConsumerMessage, 0, 1000)
+					rwLock.Unlock()
+					split := 1000
+					triggerID = utils.OperationIDGenerator()
+					log.Debug(triggerID, "timer trigger msg consumer start", len(ccMsg))
+					// 每1000条消息放入分发的channel中
+					for i := 0; i < len(ccMsg)/split; i++ {
+						//log.Debug()
+						och.msgDistributionCh <- Cmd2Value{Cmd: ConsumerMsgs, Value: TriggerChannelValue{
+							triggerID: triggerID, cmsgList: ccMsg[i*split : (i+1)*split]}}
+					}
+					if (len(ccMsg) % split) > 0 {
+						och.msgDistributionCh <- Cmd2Value{Cmd: ConsumerMsgs, Value: TriggerChannelValue{
+							triggerID: triggerID, cmsgList: ccMsg[split*(len(ccMsg)/split):]}}
+					}
+					//sess.MarkMessage(ccMsg[len(cMsg)-1], "")
+
+					log.Debug(triggerID, "timer trigger msg consumer end", len(cMsg))
+				}
+			}
+		}
+	}()
 	for msg := range claim.Messages() {
 		if len(msg.Value) != 0 {
 			cMsg = append(cMsg, msg)
