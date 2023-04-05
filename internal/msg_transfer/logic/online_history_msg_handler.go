@@ -23,7 +23,7 @@ type Cmd2Value struct {
 	Value interface{}
 }
 
-// 目标channel值
+// TriggerChannelValue - 目标channel值
 type TriggerChannelValue struct {
 	triggerID string
 	cmsgList  []*sarama.ConsumerMessage
@@ -67,7 +67,7 @@ func (och *OnlineHistoryRedisConsumerHandler) ConsumeClaim(sess sarama.ConsumerG
 					split := 1000
 					triggerID = utils.OperationIDGenerator()
 					log.Debug(triggerID, "timer trigger msg consumer start", len(ccMsg))
-					// 每1000条消息放入分发的channel中
+					//todo hank 为什么这样设计 每1000条消息放入分发的channel中
 					for i := 0; i < len(ccMsg)/split; i++ {
 						//log.Debug()
 						och.msgDistributionCh <- Cmd2Value{Cmd: ConsumerMsgs, Value: TriggerChannelValue{
@@ -85,9 +85,11 @@ func (och *OnlineHistoryRedisConsumerHandler) ConsumeClaim(sess sarama.ConsumerG
 		}
 	}()
 	for msg := range claim.Messages() {
+		rwLock.Lock()
 		if len(msg.Value) != 0 {
 			cMsg = append(cMsg, msg)
 		}
+		rwLock.Unlock()
 		sess.MarkMessage(msg, "")
 	}
 	return nil

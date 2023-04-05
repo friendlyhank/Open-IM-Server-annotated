@@ -5,6 +5,7 @@ import (
 	"Open_IM/pkg/common/constant"
 	"Open_IM/pkg/common/log"
 	"flag"
+	"fmt"
 	"sync"
 )
 
@@ -14,4 +15,7 @@ func main() {
 	flag.Parse()
 	log.NewPrivateLog(constant.LogFileName)
 	logic.Init()
+	fmt.Println("start msg_transfer server ", ", OpenIM version: ", constant.CurrentVersion, "\n")
+	logic.Run()
+	wg.Wait()
 }

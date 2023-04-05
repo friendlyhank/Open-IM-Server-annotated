@@ -17,5 +17,10 @@ var (
 func Init() {
 	persistentCH.Init() // 持久化消息到数据库
 	historyCH.Init()
+	// 推送消息的生产者
 	producer = kafka.NewKafkaProducer(config.Config.Kafka.Ms2pschat.Addr, config.Config.Kafka.Ms2pschat.Topic)
+}
+
+func Run() {
+
 }
