@@ -5,8 +5,9 @@ import (
 	"Open_IM/pkg/common/kafka"
 )
 
-const ConsumerMsgs = 3 // 消费消息指令
-const ChannelNum = 100 // 设置channel数量
+const ConsumerMsgs = 3        // 消费消息指令
+const AggregationMessages = 4 // 聚合消息
+const ChannelNum = 100        // 设置channel数量
 
 var (
 	persistentCH PersistentConsumerHandler         // 持久化数据mysql
