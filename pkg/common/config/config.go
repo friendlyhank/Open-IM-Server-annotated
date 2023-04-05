@@ -84,6 +84,7 @@ type config struct {
 			MsgToMySql string `yaml:"msgToMySql"` // 持久化消息到mysql
 		}
 	}
+	ChatPersistenceMysql bool `yaml:"chatpersistencemysql"` // 是否将聊天消息持久化到数据库
 	// Prometheus 监控
 	Prometheus struct {
 		MessageGatewayPrometheusPort []int `yaml:"messageGatewayPrometheusPort"`

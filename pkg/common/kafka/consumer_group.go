@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	"context"
 	"fmt"
 	"github.com/Shopify/sarama"
 )
@@ -31,5 +32,16 @@ func NewMConsumerGroup(consumerConfig *MConsumerGroupConfig, topics, addrs []str
 		consumerGroup,
 		groupID,
 		topics,
+	}
+}
+
+// RegisterHandleAndConsumer - 注册消费者组
+func (mc *MConsumerGroup) RegisterHandleAndConsumer(handler sarama.ConsumerGroupHandler) {
+	ctx := context.Background()
+	for {
+		err := mc.ConsumerGroup.Consume(ctx, mc.topics, handler)
+		if err != nil {
+			panic(err.Error())
+		}
 	}
 }

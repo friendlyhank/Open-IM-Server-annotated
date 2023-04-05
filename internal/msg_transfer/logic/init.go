@@ -3,6 +3,7 @@ package logic
 import (
 	"Open_IM/pkg/common/config"
 	"Open_IM/pkg/common/kafka"
+	"fmt"
 )
 
 const ConsumerMsgs = 3        // 消费消息指令
@@ -23,5 +24,10 @@ func Init() {
 }
 
 func Run() {
-
+	if config.Config.ChatPersistenceMysql {
+		go persistentCH.persistentConsumerGroup.RegisterHandleAndConsumer(&persistentCH)
+	} else {
+		fmt.Println("not start mysql consumer")
+	}
+	go historyCH.historyConsumerGroup.RegisterHandleAndConsumer(&historyCH)
 }
