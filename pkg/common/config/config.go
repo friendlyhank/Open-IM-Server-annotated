@@ -82,6 +82,7 @@ type config struct {
 			MsgToRedis string `yaml:"msgToTransfer"`
 			MsgToMongo string `yaml:"msgToMongo"` // 持久化消息到mongo
 			MsgToMySql string `yaml:"msgToMySql"` // 持久化消息到mysql
+			MsgToPush  string `yaml:"msgToPush"`  // 推送消息
 		}
 	}
 	ChatPersistenceMysql bool `yaml:"chatpersistencemysql"` // 是否将聊天消息持久化到数据库
