@@ -30,9 +30,10 @@ kafka:
   ms2pschat: # 消息推送的topic
     addr: [ 127.0.0.1:9092 ] #kafka配置，默认即可
     topic: "ms2ps_chat" #消息push
-  consumergroupid:
+  consumergroupid: # 消费者组id
     msgToTransfer: mongo
     msgToMySql: mysql
+    msgToPush: push
 
 #---------------Internal service configuration---------------------#
 
