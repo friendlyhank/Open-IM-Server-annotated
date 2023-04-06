@@ -31,13 +31,15 @@ type WServer struct {
 	wsAddr       string                         // 地址
 	wsMaxConnNum int                            // 最大连接数
 	wsUpGrader   *websocket.Upgrader            // socket初始化配置
-	wsUserToConn map[string]map[int][]*UserConn // 存储用户连接信息 todo hank 为什么要设置切片
+	wsConnToUser map[*UserConn]map[int]string // 这个用处在于多端登录的时候，防止根据userid删除误删除新的conn
+	wsUserToConn map[string]map[int]*UserConn // 存储用户连接信息
 }
 
 // 初始化WServer
 func (ws *WServer) onInit(wsPort int) {
 	ws.wsAddr = ":" + utils.IntToString(wsPort)
-	ws.wsUserToConn = make(map[string]map[int][]*UserConn)
+	ws.wsConnToUser = make(map[*UserConn]map[int]string)
+	ws.wsUserToConn = make(map[string]map[int]*UserConn)
 	ws.wsUpGrader = &websocket.Upgrader{
 		HandshakeTimeout: time.Duration(config.Config.LongConnSvr.WebsocketTimeOut) * time.Second,
 		ReadBufferSize:   config.Config.LongConnSvr.WebsocketMaxMsgLen,
@@ -168,23 +170,22 @@ func (ws *WServer) addUserConn(uid string, platformID int, conn *UserConn, token
 	// 多端用户踢出逻辑
 
 	if oldConnMap, ok := ws.wsUserToConn[uid]; ok {
-		if conns, ok := oldConnMap[platformID]; ok {
-			conns = append(conns, conn)
-			oldConnMap[platformID] = conns
-		} else {
-			var conns []*UserConn
-			conns = append(conns, conn)
-			oldConnMap[platformID] = conns
-		}
+		oldConnMap[platformID] = conn
 		ws.wsUserToConn[uid] = oldConnMap
 		log.Debug(operationID, "user not first come in, add conn ", uid, platformID, conn, oldConnMap)
 	} else {
-		i := make(map[int][]*UserConn)
-		var conns []*UserConn
-		conns = append(conns, conn)
-		i[platformID] = conns
+		i := make(map[int]*UserConn)
+		i[platformID] = conn
 		ws.wsUserToConn[uid] = i
 		log.Debug(operationID, "user first come in, new user, conn", uid, platformID, conn, ws.wsUserToConn[uid])
+	}
+	if oldStringMap, ok := ws.wsConnToUser[conn]; ok {
+		oldStringMap[platformID] = uid
+		ws.wsConnToUser[conn] = oldStringMap
+	}else{
+		i := make(map[int]string)
+		i[platformID] = uid
+		ws.wsConnToUser[conn] = i
 	}
 	// 计算用户的连接数
 	count := 0
@@ -199,53 +200,45 @@ func (ws *WServer) delUserConn(conn *UserConn) {
 	rwLock.Lock()
 	defer rwLock.Unlock()
 	operationID := utils.OperationIDGenerator()
-	platform := int(conn.PlatformID)
-
-	if oldConnMap, ok := ws.wsUserToConn[conn.userID]; ok { // only recycle self conn
-		if oldconns, okMap := oldConnMap[platform]; okMap {
-
-			var a []*UserConn
-
-			for _, client := range oldconns {
-				if client != conn {
-					a = append(a, client)
-
-				}
+	var uid string
+	var platform int
+	if oldStringMap, okg := ws.wsConnToUser[conn]; okg {
+		for k, v := range oldStringMap {
+			platform = k
+			uid = v
+		}
+		if oldConnMap, ok := ws.wsUserToConn[uid]; ok {
+			delete(oldConnMap, platform)
+			ws.wsUserToConn[uid] = oldConnMap
+			if len(oldConnMap) == 0 {
+				delete(ws.wsUserToConn, uid)
 			}
-			if len(a) != 0 {
-				oldConnMap[platform] = a
-			} else {
-				delete(oldConnMap, platform)
+			count := 0
+			for _, v := range ws.wsUserToConn {
+				count = count + len(v)
 			}
+			log.Debug(operationID, "WS delete operation", "", "wsUser deleted", ws.wsUserToConn, "disconnection_uid", uid, "disconnection_platform", platform, "online_user_num", len(ws.wsUserToConn), "online_conn_num", count)
+		}else{
+			log.Debug(operationID, "WS delete operation", "", "wsUser deleted", ws.wsUserToConn, "disconnection_uid", uid, "disconnection_platform", platform, "online_user_num", len(ws.wsUserToConn))
 		}
-		ws.wsUserToConn[conn.userID] = oldConnMap
-		if len(oldConnMap) == 0 {
-			delete(ws.wsUserToConn, conn.userID)
-		}
-		count := 0
-		for _, v := range ws.wsUserToConn {
-			count = count + len(v)
-		}
-		log.Debug(operationID, "WS delete operation", "", "wsUser deleted", ws.wsUserToConn, "disconnection_uid", conn.userID, "disconnection_platform", platform, "online_user_num", len(ws.wsUserToConn), "online_conn_num", count)
+		delete(ws.wsConnToUser, conn)
 	}
-
 	err := conn.Close()
 	if err != nil {
-		log.Error(operationID, " close err", "", "uid", conn.userID, "platform", platform)
+		log.Error(operationID, " close err", "", "uid", uid, "platform", platform)
 	}
 	if conn.PlatformID == 0 || conn.connID == "" {
 		log.NewWarn(operationID, utils.GetSelfFuncName(), "PlatformID or connID is null", conn.PlatformID, conn.connID)
 	}
-
 	// todo hank 用户下线回调
 }
 
 // getUserAllCons -获取用户所有的连接
-func (ws *WServer) getUserAllCons(uid string) map[int][]*UserConn {
+func (ws *WServer) getUserAllCons(uid string) map[int]*UserConn {
 	rwLock.RLock()
 	defer rwLock.RUnlock()
 	if connMap, ok := ws.wsUserToConn[uid]; ok {
-		newConnMap := make(map[int][]*UserConn)
+		newConnMap := make(map[int]*UserConn)
 		for k, v := range connMap {
 			newConnMap[k] = v
 		}
