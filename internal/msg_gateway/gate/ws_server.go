@@ -165,6 +165,7 @@ func (ws *WServer) addUserConn(uid string, platformID int, conn *UserConn, token
 	log.Info(operationID, utils.GetSelfFuncName(), " args: ", uid, platformID, conn, token, "ip: ", conn.RemoteAddr().String())
 
 	// 用户上线回调
+	// 多端用户踢出逻辑
 
 	if oldConnMap, ok := ws.wsUserToConn[uid]; ok {
 		if conns, ok := oldConnMap[platformID]; ok {
