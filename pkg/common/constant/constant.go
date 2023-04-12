@@ -3,6 +3,7 @@ package constant
 const (
 	//Websocket Protocol  socket协议
 	WSSendMsg = 1003 // 发送消息
+	WSPushMsg = 2001 // 推送消息
 
 	//SessionType
 	SingleChatType = 1 // 单聊消息
