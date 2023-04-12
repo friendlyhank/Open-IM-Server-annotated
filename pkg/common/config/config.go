@@ -9,6 +9,10 @@ import (
 	"runtime"
 )
 
+/*
+ * 读取加载配置
+ */
+
 var (
 	_, b, _, _ = runtime.Caller(0)
 	// Root folder of this project

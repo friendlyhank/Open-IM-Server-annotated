@@ -2,12 +2,14 @@ package log
 
 import (
 	"Open_IM/pkg/common/config"
+	"bufio"
+	"os"
+	"time"
+
 	nested "github.com/antonfisher/nested-logrus-formatter"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
-	"os"
-	"time"
 )
 
 var logger *Logger
@@ -29,16 +31,16 @@ func NewPrivateLog(moduleName string) {
 
 func loggerInit(moduleName string) *Logger {
 	var logger = logrus.New()
-	// 设置日志级别
+	// 设置日志级别，所有的日志都打印
 	logger.SetLevel(logrus.Level(config.Config.Log.RemainLogLevel))
-	//src, err := os.OpenFile(os.DevNull, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
-	//if err != nil {
-	//	panic(err.Error())
-	//}
-	//writer := bufio.NewWriter(src)
-	//logger.SetOutput(writer)
-	// todo hank 先特殊处理不写入文件
-	logger.SetOutput(os.Stdout)
+	src, err := os.OpenFile(os.DevNull, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	if err != nil {
+		panic(err.Error())
+	}
+	writer := bufio.NewWriter(src)
+	logger.SetOutput(writer)
+	// 不在终端输出日志
+	//logger.SetOutput(os.Stdout)
 	// 设置日志格式
 	logger.SetFormatter(&nested.Formatter{
 		TimestampFormat: "2006-01-02 15:04:05.000",
