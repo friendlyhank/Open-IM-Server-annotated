@@ -1,8 +1,10 @@
 package config
 
 import (
+	"fmt"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"runtime"
 )
@@ -93,13 +95,35 @@ type config struct {
 }
 
 func unmarshalConfig(config interface{}, configName string) {
-	// todo hank 先特殊处理,研究一下路径问题
-	bytes, err := ioutil.ReadFile(filepath.Join(Root, "config", configName))
-	if err != nil {
-		panic(err.Error() + configName)
+	var env string
+	if configName == "config.yaml" {
+		env = "CONFIG_NAME"
+	} else if configName == "usualConfig.yaml" {
+		env = "USUAL_CONFIG_NAME"
 	}
-	if err = yaml.Unmarshal(bytes, config); err != nil {
-		panic(err.Error())
+	cfgName := os.Getenv(env)
+	if len(cfgName) != 0 {
+		bytes, err := ioutil.ReadFile(filepath.Join(cfgName, "config", configName))
+		if err != nil {
+			bytes, err = ioutil.ReadFile(filepath.Join(Root, "config", configName))
+			if err != nil {
+				panic(err.Error() + " config: " + filepath.Join(cfgName, "config", configName))
+			}
+		} else {
+			Root = cfgName
+		}
+		if err = yaml.Unmarshal(bytes, config); err != nil {
+			panic(err.Error())
+		}
+	} else {
+		// 配置是已编译的路径为启始
+		bytes, err := ioutil.ReadFile(fmt.Sprintf("../config/%s", configName))
+		if err != nil {
+			panic(err.Error() + configName)
+		}
+		if err = yaml.Unmarshal(bytes, config); err != nil {
+			panic(err.Error())
+		}
 	}
 }
 
