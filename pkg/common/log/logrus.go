@@ -110,6 +110,15 @@ func Debug(OperationID string, args ...interface{}) {
 	}).Debugln(args)
 }
 
+//Deprecated
+func Warning(token, OperationID, format string, args ...interface{}) {
+	logger.WithFields(logrus.Fields{
+		"PID":         logger.Pid,
+		"OperationID": OperationID,
+	}).Warningf(format, args...)
+
+}
+
 func NewInfo(OperationID string, args ...interface{}) {
 	logger.WithFields(logrus.Fields{
 		"OperationID": OperationID,

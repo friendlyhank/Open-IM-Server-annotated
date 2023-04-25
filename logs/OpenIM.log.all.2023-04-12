@@ -1,1 +1,0 @@
-2023-04-12 23:07:51.119[36m [INFO] [PID:53298] [FilePath:grpc-etcdv3/getcdv3/register.go:48] [OperationID:1681312073715167162] [0m[RegisterEtcd args:  openim 127.0.0.1:2379 192.168.10.100 :192.168.10.100:10140 10140 30]
