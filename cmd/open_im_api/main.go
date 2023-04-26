@@ -1,6 +1,7 @@
 package main
 
 import (
+	apiAuth "Open_IM/internal/api/auth"
 	"Open_IM/pkg/common/config"
 	"Open_IM/pkg/common/constant"
 	"Open_IM/pkg/common/log"
