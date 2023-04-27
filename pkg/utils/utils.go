@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"math/rand"
 	"runtime"
@@ -10,6 +11,11 @@ import (
 )
 
 // 核心工具类
+
+// copy a by b  b->a 拷贝结构体
+func CopyStructFields(a interface{}, b interface{}, fields ...string) (err error) {
+	return copier.Copy(a, b)
+}
 
 func Wrap(err error, message string) error {
 	return errors.Wrap(err, "==> "+printCallerNameAndLine()+message)

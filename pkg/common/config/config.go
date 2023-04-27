@@ -46,6 +46,7 @@ type config struct {
 		OpenImMsgName   string `yaml:"openImMsgName"`   // im消息名称
 		OpenImPushName  string `yaml:"openImPushName"`  // 推送名称
 		OpenImRelayName string `yaml:"openImRelayName"` // 消息转发,真正发送数据服务
+		OpenImAuthName  string `yaml:"openImAuthName"`  // 授权验证，包含注册，获取用户token等
 	}
 	// etcd相关配置
 	Etcd struct {

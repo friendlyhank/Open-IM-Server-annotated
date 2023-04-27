@@ -13,6 +13,11 @@ const (
 	OfflineStatus = "offline" // 离线状态
 )
 
+const (
+	AppOrdinaryUsers = 1 // app普通用户
+	AppAdmin         = 2 // app管理员
+)
+
 const LogFileName = "OpenIM.log" // 初始化日志名称
 
 const CurrentVersion = "v2.3.8-rc0" // 当前版本

@@ -6,3 +6,16 @@ type UserRegisterReq struct {
 	ApiUserInfo
 	OperationID string `json:"operationID" binding:"required"`
 }
+
+// 用户token信息
+type UserTokenInfo struct {
+	UserID      string `json:"userID"`
+	Token       string `json:"token"`
+	ExpiredTime int64  `json:"expiredTime"`
+}
+
+// UserRegisterResp - 用户注册api响应
+type UserRegisterResp struct {
+	CommResp
+	UserToken UserTokenInfo `json:"data"`
+}

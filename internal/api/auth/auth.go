@@ -2,9 +2,17 @@ package apiAuth
 
 import (
 	api "Open_IM/pkg/base_info"
+	"Open_IM/pkg/common/config"
+	"Open_IM/pkg/common/constant"
 	"Open_IM/pkg/common/log"
+	"Open_IM/pkg/grpc-etcdv3/getcdv3"
+	rpc "Open_IM/pkg/proto/auth"
+	open_im_sdk "Open_IM/pkg/proto/sdk_ws"
+	"Open_IM/pkg/utils"
+	"context"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strings"
 )
 
 // @Summary 用户注册
@@ -26,5 +34,49 @@ func UserRegister(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"errCode": 400, "errMsg": errMsg})
 		return
 	}
+	req := &rpc.UserRegisterReq{UserInfo: &open_im_sdk.UserInfo{}}
+	utils.CopyStructFields(req.UserInfo, &params)
+	//copier.Copy(req.UserInfo, &params)
+	req.OperationID = params.OperationID
+	log.NewInfo(req.OperationID, "UserRegister args ", req.String())
+	etcdConn := getcdv3.GetDefaultConn(config.Config.Etcd.EtcdSchema, strings.Join(config.Config.Etcd.EtcdAddr, ","), config.Config.RpcRegisterName.OpenImAuthName, req.OperationID)
+	if etcdConn == nil {
+		errMsg := req.OperationID + " getcdv3.GetDefaultConn == nil"
+		log.NewError(req.OperationID, errMsg)
+		c.JSON(http.StatusInternalServerError, gin.H{"errCode": 500, "errMsg": errMsg})
+		return
+	}
+	client := rpc.NewAuthClient(etcdConn)
+	reply, err := client.UserRegister(context.Background(), req)
+	if err != nil {
+		errMsg := req.OperationID + " " + "UserRegister failed " + err.Error() + req.String()
+		log.NewError(req.OperationID, errMsg)
+		c.JSON(http.StatusInternalServerError, gin.H{"errCode": 500, "errMsg": errMsg})
+		return
+	}
+	if reply.CommonResp.ErrCode != 0 {
+		errMsg := req.OperationID + " " + " UserRegister failed " + reply.CommonResp.ErrMsg + req.String()
+		log.NewError(req.OperationID, errMsg)
+		if reply.CommonResp.ErrCode == constant.RegisterLimit {
+			c.JSON(http.StatusOK, gin.H{"errCode": constant.RegisterLimit, "errMsg": "用户注册被限制"})
+		} else if reply.CommonResp.ErrCode == constant.InvitationError {
+			c.JSON(http.StatusOK, gin.H{"errCode": constant.InvitationError, "errMsg": "邀请码错误"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"errCode": 500, "errMsg": errMsg})
+		}
+		return
+	}
 
+	pbDataToken := &rpc.UserTokenReq{Platform: params.Platform, FromUserID: params.UserID, OperationID: params.OperationID}
+	replyToken, err := client.UserToken(context.Background(), pbDataToken)
+	if err != nil {
+		errMsg := req.OperationID + " " + " client.UserToken failed " + err.Error() + pbDataToken.String()
+		log.NewError(req.OperationID, errMsg)
+		c.JSON(http.StatusInternalServerError, gin.H{"errCode": 500, "errMsg": errMsg})
+		return
+	}
+	resp := api.UserRegisterResp{CommResp: api.CommResp{ErrCode: replyToken.CommonResp.ErrCode, ErrMsg: replyToken.CommonResp.ErrMsg},
+		UserToken: api.UserTokenInfo{UserID: req.UserInfo.UserID, Token: replyToken.Token, ExpiredTime: replyToken.ExpiredTime}}
+	log.NewInfo(req.OperationID, "UserRegister return ", resp)
+	c.JSON(http.StatusOK, resp)
 }
