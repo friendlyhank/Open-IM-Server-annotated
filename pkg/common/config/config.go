@@ -24,6 +24,16 @@ var Config config
 type config struct {
 	RpcRegisterIP string `yaml:"rpcRegisterIP"` // rpc注册ip
 	ListenIP      string `yaml:"listenIP"`      // 各个rpc服务监听的ip
+	// api服务相关
+	Api struct {
+		GinPort  []int  `yaml:"openImApiPort"` // gin端口设置
+		ListenIP string `yaml:"listenIP"`      // ip
+	}
+
+	TokenPolicy struct {
+		AccessSecret string `yaml:"accessSecret"` // 生成token的密钥
+		AccessExpire int64  `yaml:"accessExpire"` // token过期时间
+	}
 	// mysql 相关
 	Mysql struct {
 		DBAddress      []string `yaml:"dbMysqlAddress"`      // 地址
@@ -34,6 +44,13 @@ type config struct {
 		DBMaxIdleConns int      `yaml:"dbMaxIdleConns"`      // 最大空闲连接
 		DBMaxLifeTime  int      `yaml:"dbMaxLifeTime"`       // 连接存活时间
 		LogLevel       int      `yaml:"logLevel"`            // 日志等级
+	}
+	// redis相关配置
+	Redis struct {
+		DBAddress     []string `yaml:"dbAddress"`
+		DBUserName    string   `yaml:"dbUserName"`
+		DBPassWord    string   `yaml:"dbPassWord"`
+		EnableCluster bool     `yaml:"enableCluster"`
 	}
 	// rpc相关端口
 	RpcPort struct {

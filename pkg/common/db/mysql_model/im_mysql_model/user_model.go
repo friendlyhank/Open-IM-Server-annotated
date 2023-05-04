@@ -22,3 +22,14 @@ func UserRegister(user db.User) error {
 	}
 	return nil
 }
+
+// GetUserByUserID - 根据userid获取用户信息
+func GetUserByUserID(userID string) (*db.User, error) {
+	var user db.User
+	// take复合条件的第一条记录
+	err := db.DB.MysqlDB.DefaultGormDB().Table("users").Where("user_id=?", userID).Take(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}

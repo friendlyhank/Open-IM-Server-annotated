@@ -67,6 +67,7 @@ func UserRegister(c *gin.Context) {
 		return
 	}
 
+	// 获取对应用户token
 	pbDataToken := &rpc.UserTokenReq{Platform: params.Platform, FromUserID: params.UserID, OperationID: params.OperationID}
 	replyToken, err := client.UserToken(context.Background(), pbDataToken)
 	if err != nil {

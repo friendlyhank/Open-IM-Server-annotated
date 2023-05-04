@@ -6,9 +6,12 @@ import (
 	"Open_IM/pkg/common/constant"
 	"Open_IM/pkg/common/log"
 	"Open_IM/pkg/utils"
+	"flag"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"io"
 	"os"
+	"strconv"
 )
 
 /*
@@ -36,5 +39,19 @@ func main() {
 	authRouterGroup := r.Group("/auth")
 	{
 		authRouterGroup.POST("/user_register", apiAuth.UserRegister) // 用户注册接口
+	}
+
+	defaultPorts := config.Config.Api.GinPort
+	ginPort := flag.Int("port", defaultPorts[0], "get ginServerPort from cmd,default 10002 as port")
+	flag.Parse()
+	address := "0.0.0.0:" + strconv.Itoa(*ginPort)
+	if config.Config.Api.ListenIP != "" {
+		address = config.Config.Api.ListenIP + ":" + strconv.Itoa(*ginPort)
+	}
+	fmt.Println("start api server, address: ", address, ", OpenIM version: ", constant.CurrentVersion)
+	err := r.Run(address)
+	if err != nil {
+		log.Error("", "api run failed ", address, err.Error())
+		panic("api start failed " + err.Error())
 	}
 }
