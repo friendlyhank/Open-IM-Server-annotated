@@ -57,6 +57,7 @@ type config struct {
 		OpenImMessagePort        []int `yaml:"openImMessagePort"`        // im消息端口
 		OpenImMessageGatewayPort []int `yaml:"openImMessageGatewayPort"` // im网关端口
 		OpenImPushPort           []int `yaml:"openImPushPort"`           // im消息推送端口
+		OpenImAuthPort           []int `yaml:"openImAuthPort"`           // rpc鉴权端口
 	}
 	// rpc注册的服务
 	RpcRegisterName struct {
