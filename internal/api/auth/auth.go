@@ -81,3 +81,45 @@ func UserRegister(c *gin.Context) {
 	log.NewInfo(req.OperationID, "UserRegister return ", resp)
 	c.JSON(http.StatusOK, resp)
 }
+
+// @Summary 用户登录
+// @Description 获取用户的token
+// @Tags 鉴权认证
+// @ID UserToken
+// @Accept json
+// @Param req body api.UserTokenReq true "secret为openIM密钥, 详细见服务端config.yaml secret字段 <br> platform为平台ID"
+// @Produce json
+// @Success 0 {object} api.UserTokenResp
+// @Failure 500 {object} api.Swagger500Resp "errCode为500 一般为服务器内部错误"
+// @Failure 400 {object} api.Swagger400Resp "errCode为400 一般为参数输入错误, token未带上等"
+// @Router /auth/user_token [post]
+func UserToken(c *gin.Context) {
+	params := api.UserTokenReq{}
+	if err := c.BindJSON(&params); err != nil {
+		errMsg := " BindJSON failed " + err.Error()
+		log.NewError(params.OperationID, errMsg)
+		c.JSON(http.StatusBadRequest, gin.H{"errCode": 400, "errMsg": errMsg})
+		return
+	}
+	req := &rpc.UserTokenReq{Platform: params.Platform, FromUserID: params.UserID, OperationID: params.OperationID, LoginIp: params.LoginIp}
+	log.NewInfo(req.OperationID, "UserToken args ", req.String())
+	etcdConn := getcdv3.GetDefaultConn(config.Config.Etcd.EtcdSchema, strings.Join(config.Config.Etcd.EtcdAddr, ","), config.Config.RpcRegisterName.OpenImAuthName, req.OperationID)
+	if etcdConn == nil {
+		errMsg := req.OperationID + " getcdv3.GetDefaultConn == nil"
+		log.NewError(req.OperationID, errMsg)
+		c.JSON(http.StatusInternalServerError, gin.H{"errCode": 500, "errMsg": errMsg})
+		return
+	}
+	client := rpc.NewAuthClient(etcdConn)
+	reply, err := client.UserToken(context.Background(), req)
+	if err != nil {
+		errMsg := req.OperationID + " UserToken failed " + err.Error() + " req: " + req.String()
+		log.NewError(req.OperationID, errMsg)
+		c.JSON(http.StatusInternalServerError, gin.H{"errCode": 500, "errMsg": errMsg})
+		return
+	}
+	resp := api.UserTokenResp{CommResp: api.CommResp{ErrCode: reply.CommonResp.ErrCode, ErrMsg: reply.CommonResp.ErrMsg},
+		UserToken: api.UserTokenInfo{UserID: req.FromUserID, Token: reply.Token, ExpiredTime: reply.ExpiredTime}}
+	log.NewInfo(req.OperationID, "UserToken return ", resp)
+	c.JSON(http.StatusOK, resp)
+}

@@ -39,6 +39,7 @@ func main() {
 	authRouterGroup := r.Group("/auth")
 	{
 		authRouterGroup.POST("/user_register", apiAuth.UserRegister) // 用户注册接口
+		authRouterGroup.POST("/user_token", apiAuth.UserToken)       // 用户登录
 	}
 
 	defaultPorts := config.Config.Api.GinPort
