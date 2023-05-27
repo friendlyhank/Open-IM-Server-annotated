@@ -3,16 +3,21 @@ package gate
 import (
 	"Open_IM/pkg/common/config"
 	"Open_IM/pkg/common/constant"
+	"Open_IM/pkg/common/db"
 	"Open_IM/pkg/common/log"
 	"Open_IM/pkg/common/token_verify"
+	"Open_IM/pkg/grpc-etcdv3/getcdv3"
 	"Open_IM/pkg/utils"
 	"bytes"
 	"compress/gzip"
+	"encoding/gob"
+	go_redis "github.com/go-redis/redis/v8"
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -25,8 +30,9 @@ type UserConn struct {
 	PlatformID      int32       // 平台id
 	IsCompress      bool        // 是否压缩数据
 	userID          string      // 用户id
-	token           string      // token
-	connID          string      // 连接connID
+	// todo hank IsBackground
+	token  string // token
+	connID string // 连接connID
 }
 
 type WServer struct {
@@ -122,6 +128,7 @@ func (ws *WServer) readMsg(conn *UserConn) {
 				log.NewWarn("", "reader close failed")
 			}
 		}
+		// 解析消息参数
 		ws.msgParse(conn, msg)
 	}
 }
@@ -160,32 +167,191 @@ func (ws *WServer) SetWriteTimeoutWriteMsg(conn *UserConn, a int, msg []byte, ti
 	return conn.WriteMessage(a, msg)
 }
 
+// MultiTerminalLoginRemoteChecker - 远端的多端登录检查(涉及多台机器)
+func (ws *WServer) MultiTerminalLoginRemoteChecker(userID string, platformID int32, token string, operationID string) {
+	grpcCons := getcdv3.GetDefaultGatewayConn4Unique(config.Config.Etcd.EtcdSchema, strings.Join(config.Config.Etcd.EtcdAddr, ","), operationID)
+	log.NewInfo(operationID, utils.GetSelfFuncName(), "args  grpcCons: ", userID, platformID, grpcCons)
+	// todo hank
+}
+
+// MultiTerminalLoginCheckerWithLock - 多端登录检查(带锁)
+func (ws *WServer) MultiTerminalLoginCheckerWithLock(uid string, platformID int, token string, operationID string) {
+	// todo hank 为何需要锁
+	log.NewInfo(operationID, utils.GetSelfFuncName(), " rpc args: ", uid, platformID, token)
+	switch config.Config.MultiLoginPolicy {
+	case constant.DefalutNotKick:
+	case constant.PCAndOther:
+		if constant.PlatformNameToClass(constant.PlatformIDToName(platformID)) == constant.TerminalPC {
+			return
+		}
+		fallthrough
+	case constant.AllLoginButSameTermKick:
+		if oldConnMap, ok := ws.wsUserToConn[uid]; ok { // user->map[platform->conn]
+			if oldConns, ok := oldConnMap[platformID]; ok {
+				log.NewDebug(operationID, uid, platformID, "kick old conn")
+				for _, conn := range oldConns {
+					ws.sendKickMsg(conn, operationID)
+				}
+				// 获取对应token信息
+				m, err := db.DB.GetTokenMapByUidPid(uid, constant.PlatformIDToName(platformID))
+				if err != nil && err != go_redis.Nil {
+					log.NewError(operationID, "get token from redis err", err.Error(), uid, constant.PlatformIDToName(platformID))
+					return
+				}
+				if m == nil {
+					log.NewError(operationID, "get token from redis err", "m is nil", uid, constant.PlatformIDToName(platformID))
+					return
+				}
+				log.NewDebug(operationID, "get token map is ", m, uid, constant.PlatformIDToName(platformID))
+				// 标记对应token未登出状态
+				for k, _ := range m {
+					if k != token {
+						m[k] = constant.KickedToken
+					}
+				}
+				log.NewDebug(operationID, "set token map is ", m, uid, constant.PlatformIDToName(platformID))
+				err = db.DB.SetTokenMapByUidPid(uid, platformID, m)
+				if err != nil {
+					log.NewError(operationID, "SetTokenMapByUidPid err", err.Error(), uid, platformID, m)
+					return
+				}
+				delete(oldConnMap, platformID)
+				ws.wsUserToConn[uid] = oldConnMap
+				if len(oldConnMap) == 0 {
+					delete(ws.wsUserToConn, uid)
+				}
+				callbackResp := callbackUserKickOff(operationID, uid, platformID)
+				if callbackResp.ErrCode != 0 {
+					log.NewError(operationID, utils.GetSelfFuncName(), "callbackUserOffline failed", callbackResp)
+				}
+			} else {
+				log.Debug(operationID, "normal uid-conn  ", uid, platformID, oldConnMap[platformID])
+			}
+		} else {
+			log.NewDebug(operationID, "no other conn", ws.wsUserToConn, uid, platformID)
+		}
+
+	case constant.SingleTerminalLogin: // todo 这里好像未实现
+	case constant.WebAndOther:
+	}
+}
+
+// MultiTerminalLoginChecker - 多端登录检查
+func (ws *WServer) MultiTerminalLoginChecker(uid string, platformID int, newConn *UserConn, token string, operationID string) {
+	switch config.Config.MultiLoginPolicy {
+	case constant.DefalutNotKick:
+	case constant.PCAndOther:
+		if constant.PlatformNameToClass(constant.PlatformIDToName(platformID)) == constant.TerminalPC {
+			return
+		}
+		fallthrough
+	case constant.AllLoginButSameTermKick:
+		if oldConnMap, ok := ws.wsUserToConn[uid]; ok { // user->map[platform->conn]
+			if oldConns, ok := oldConnMap[platformID]; ok {
+				log.NewDebug(operationID, uid, platformID, "kick old conn")
+				for _, conn := range oldConns {
+					ws.sendKickMsg(conn, operationID)
+				}
+				m, err := db.DB.GetTokenMapByUidPid(uid, constant.PlatformIDToName(platformID))
+				if err != nil && err != go_redis.Nil {
+					log.NewError(operationID, "get token from redis err", err.Error(), uid, constant.PlatformIDToName(platformID))
+					return
+				}
+				if m == nil {
+					log.NewError(operationID, "get token from redis err", "m is nil", uid, constant.PlatformIDToName(platformID))
+					return
+				}
+				log.NewDebug(operationID, "get token map is ", m, uid, constant.PlatformIDToName(platformID))
+
+				for k, _ := range m {
+					if k != token {
+						m[k] = constant.KickedToken
+					}
+				}
+				log.NewDebug(operationID, "set token map is ", m, uid, constant.PlatformIDToName(platformID))
+				err = db.DB.SetTokenMapByUidPid(uid, platformID, m)
+				if err != nil {
+					log.NewError(operationID, "SetTokenMapByUidPid err", err.Error(), uid, platformID, m)
+					return
+				}
+				delete(oldConnMap, platformID)
+				ws.wsUserToConn[uid] = oldConnMap
+				if len(oldConnMap) == 0 {
+					delete(ws.wsUserToConn, uid)
+				}
+				callbackResp := callbackUserKickOff(operationID, uid, platformID)
+				if callbackResp.ErrCode != 0 {
+					log.NewError(operationID, utils.GetSelfFuncName(), "callbackUserOffline failed", callbackResp)
+				}
+			} else {
+				log.Debug(operationID, "normal uid-conn  ", uid, platformID, oldConnMap[platformID])
+			}
+
+		} else {
+			log.NewDebug(operationID, "no other conn", ws.wsUserToConn, uid, platformID)
+		}
+
+	case constant.SingleTerminalLogin:
+	case constant.WebAndOther:
+	}
+}
+
+// sendKickMsg - 发送踢出消息
+func (ws *WServer) sendKickMsg(oldConn *UserConn, operationID string) {
+	mReply := Resp{
+		ReqIdentifier: constant.WSKickOnlineMsg,
+		ErrCode:       constant.ErrTokenInvalid.ErrCode,
+		ErrMsg:        constant.ErrTokenInvalid.ErrMsg,
+		OperationID:   operationID,
+	}
+	var b bytes.Buffer
+	enc := gob.NewEncoder(&b)
+	err := enc.Encode(mReply)
+	if err != nil {
+		log.NewError(mReply.OperationID, mReply.ReqIdentifier, mReply.ErrCode, mReply.ErrMsg, "Encode Msg error", oldConn.RemoteAddr().String(), err.Error())
+		return
+	}
+	err = ws.writeMsg(oldConn, websocket.BinaryMessage, b.Bytes())
+	if err != nil {
+		log.NewError(mReply.OperationID, mReply.ReqIdentifier, mReply.ErrCode, mReply.ErrMsg, "sendKickMsg WS WriteMsg error", oldConn.RemoteAddr().String(), err.Error())
+	}
+	errClose := oldConn.Close()
+	if errClose != nil {
+		log.NewError(mReply.OperationID, mReply.ReqIdentifier, mReply.ErrCode, mReply.ErrMsg, "close old conn error", oldConn.RemoteAddr().String(), err.Error())
+
+	}
+}
+
 // addUserConn - 添加用户连接
 func (ws *WServer) addUserConn(uid string, platformID int, conn *UserConn, token string, connID, operationID string) {
 	rwLock.Lock()
 	defer rwLock.Unlock()
 	log.Info(operationID, utils.GetSelfFuncName(), " args: ", uid, platformID, conn, token, "ip: ", conn.RemoteAddr().String())
-
-	// todo hank 用户上线回调
-	//todo hank 多端用户踢出逻辑
-
+	// 用户在线回调
+	callbackResp := callbackUserOnline(operationID, uid, platformID, token, connID)
+	if callbackResp.ErrCode != 0 {
+		log.NewError(operationID, utils.GetSelfFuncName(), "callbackUserOnline resp:", callbackResp)
+	}
+	go ws.MultiTerminalLoginRemoteChecker(uid, int32(platformID), token, operationID)
+	ws.MultiTerminalLoginChecker(uid, platformID, conn, token, operationID)
 	if oldConnMap, ok := ws.wsUserToConn[uid]; ok {
-		oldConnMap[platformID] = conn
+		if conns, ok := oldConnMap[platformID]; ok {
+			conns = append(conns, conn)
+			oldConnMap[platformID] = conns
+		} else {
+			var conns []*UserConn
+			conns = append(conns, conn)
+			oldConnMap[platformID] = conns
+		}
 		ws.wsUserToConn[uid] = oldConnMap
 		log.Debug(operationID, "user not first come in, add conn ", uid, platformID, conn, oldConnMap)
 	} else {
-		i := make(map[int]*UserConn)
-		i[platformID] = conn
+		i := make(map[int][]*UserConn)
+		var conns []*UserConn
+		conns = append(conns, conn)
+		i[platformID] = conns
 		ws.wsUserToConn[uid] = i
 		log.Debug(operationID, "user first come in, new user, conn", uid, platformID, conn, ws.wsUserToConn[uid])
-	}
-	if oldStringMap, ok := ws.wsConnToUser[conn]; ok {
-		oldStringMap[platformID] = uid
-		ws.wsConnToUser[conn] = oldStringMap
-	} else {
-		i := make(map[int]string)
-		i[platformID] = uid
-		ws.wsConnToUser[conn] = i
 	}
 	// 计算用户的连接数
 	count := 0
@@ -200,45 +366,53 @@ func (ws *WServer) delUserConn(conn *UserConn) {
 	rwLock.Lock()
 	defer rwLock.Unlock()
 	operationID := utils.OperationIDGenerator()
-	var uid string
-	var platform int
-	if oldStringMap, okg := ws.wsConnToUser[conn]; okg {
-		for k, v := range oldStringMap {
-			platform = k
-			uid = v
-		}
-		if oldConnMap, ok := ws.wsUserToConn[uid]; ok {
-			delete(oldConnMap, platform)
-			ws.wsUserToConn[uid] = oldConnMap
-			if len(oldConnMap) == 0 {
-				delete(ws.wsUserToConn, uid)
+	platform := int(conn.PlatformID)
+
+	if oldConnMap, ok := ws.wsUserToConn[conn.userID]; ok { // only recycle self conn
+		if oldconns, okMap := oldConnMap[platform]; okMap {
+			var a []*UserConn
+
+			for _, client := range oldconns {
+				if client != conn {
+					a = append(a, client)
+
+				}
 			}
-			count := 0
-			for _, v := range ws.wsUserToConn {
-				count = count + len(v)
+			if len(a) != 0 {
+				oldConnMap[platform] = a
+			} else {
+				delete(oldConnMap, platform)
 			}
-			log.Debug(operationID, "WS delete operation", "", "wsUser deleted", ws.wsUserToConn, "disconnection_uid", uid, "disconnection_platform", platform, "online_user_num", len(ws.wsUserToConn), "online_conn_num", count)
-		} else {
-			log.Debug(operationID, "WS delete operation", "", "wsUser deleted", ws.wsUserToConn, "disconnection_uid", uid, "disconnection_platform", platform, "online_user_num", len(ws.wsUserToConn))
 		}
-		delete(ws.wsConnToUser, conn)
+		ws.wsUserToConn[conn.userID] = oldConnMap
+		if len(oldConnMap) == 0 {
+			delete(ws.wsUserToConn, conn.userID)
+		}
+		count := 0
+		for _, v := range ws.wsUserToConn {
+			count = count + len(v)
+		}
+		log.Debug(operationID, "WS delete operation", "", "wsUser deleted", ws.wsUserToConn, "disconnection_uid", conn.userID, "disconnection_platform", platform, "online_user_num", len(ws.wsUserToConn), "online_conn_num", count)
 	}
 	err := conn.Close()
 	if err != nil {
-		log.Error(operationID, " close err", "", "uid", uid, "platform", platform)
+		log.Error(operationID, " close err", "", "uid", conn.userID, "platform", platform)
 	}
 	if conn.PlatformID == 0 || conn.connID == "" {
 		log.NewWarn(operationID, utils.GetSelfFuncName(), "PlatformID or connID is null", conn.PlatformID, conn.connID)
 	}
-	// todo hank 用户下线回调
+	callbackResp := callbackUserOffline(operationID, conn.userID, int(conn.PlatformID), conn.connID)
+	if callbackResp.ErrCode != 0 {
+		log.NewError(operationID, utils.GetSelfFuncName(), "callbackUserOffline failed", callbackResp)
+	}
 }
 
 // getUserAllCons -获取用户所有的连接
-func (ws *WServer) getUserAllCons(uid string) map[int]*UserConn {
+func (ws *WServer) getUserAllCons(uid string) map[int][]*UserConn {
 	rwLock.RLock()
 	defer rwLock.RUnlock()
 	if connMap, ok := ws.wsUserToConn[uid]; ok {
-		newConnMap := make(map[int]*UserConn)
+		newConnMap := make(map[int][]*UserConn)
 		for k, v := range connMap {
 			newConnMap[k] = v
 		}

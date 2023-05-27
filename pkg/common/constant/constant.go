@@ -2,8 +2,10 @@ package constant
 
 const (
 	//Websocket Protocol  socket协议
-	WSSendMsg = 1003 // 发送消息
-	WSPushMsg = 2001 // 推送消息
+	WSSendMsg       = 1003 // 发送消息
+	WSPushMsg       = 2001 // 推送消息
+	WSKickOnlineMsg = 2002 // 踢出消息
+	WsLogoutMsg     = 2003 // 登出消息
 
 	//SessionType
 	SingleChatType = 1 // 单聊消息
@@ -14,8 +16,26 @@ const (
 	KickedToken  = 2 // 被踢出
 	ExpiredToken = 3 // 已过期
 
+	//MultiTerminalLogin
+	DefalutNotKick = 0 // 多端登录默认不互踢
+	//Full-end login, but the same end is mutually exclusive 多个端可以登录，但同端会互踢
+	AllLoginButSameTermKick = 1 //
+	//Only one of the endpoints can log in 只有一个端可以登录
+	SingleTerminalLogin = 2
+	//The web side can be online at the same time, and the other side can only log in at one end web端不互踢，其他端互踢
+	WebAndOther = 3
+	//The PC side is mutually exclusive, and the mobile side is mutually exclusive, but the web side can be online at the same time pc和mobile不互踢，其他端互踢
+	PcMobileAndWeb = 4
+	//The PC terminal can be online at the same time,but other terminal only one of the endpoints can login
+	PCAndOther = 5 // pc端不互踢，其他端互踢
+
 	OnlineStatus  = "online"  // 在线状态
 	OfflineStatus = "offline" // 离线状态
+
+	//callbackCommand 回调指令
+	CallbackUserOnlineCommand  = "callbackUserOnlineCommand"  // 在线回调指令
+	CallbackUserOfflineCommand = "callbackUserOfflineCommand" // 离线回调指令
+	CallbackUserKickOffCommand = "callbackUserKickOffCommand" // 踢出回调指令
 )
 
 const (

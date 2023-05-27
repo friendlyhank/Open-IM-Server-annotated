@@ -5,6 +5,7 @@ import (
 	"Open_IM/pkg/common/config"
 	"Open_IM/pkg/common/constant"
 	"Open_IM/pkg/common/log"
+	"Open_IM/pkg/grpc-etcdv3/getcdv3"
 	"Open_IM/pkg/utils"
 	"flag"
 	"fmt"
@@ -42,7 +43,8 @@ func main() {
 		authRouterGroup.POST("/user_token", apiAuth.UserToken)       // 用户登录
 		authRouterGroup.POST("/parse_token", apiAuth.ParseToken)     // // 解析token
 	}
-
+	// 将所有的rpc服务配置注册
+	go getcdv3.RegisterConf()
 	defaultPorts := config.Config.Api.GinPort
 	ginPort := flag.Int("port", defaultPorts[0], "get ginServerPort from cmd,default 10002 as port")
 	flag.Parse()

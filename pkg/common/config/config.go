@@ -19,7 +19,16 @@ var (
 	Root = filepath.Join(filepath.Dir(b), "../../..")
 )
 
+const ConfName = "openIMConf" // 配置名称
+
 var Config config
+
+// 回调配置信息
+type callBackConfig struct {
+	Enable                 bool `yaml:"enable"` // 回调开关
+	CallbackTimeOut        int  `yaml:"callbackTimeOut"`
+	CallbackFailedContinue bool `yaml:"callbackFailedContinue"`
+}
 
 type config struct {
 	RpcRegisterIP string `yaml:"rpcRegisterIP"` // rpc注册ip
@@ -29,8 +38,8 @@ type config struct {
 		GinPort  []int  `yaml:"openImApiPort"` // gin端口设置
 		ListenIP string `yaml:"listenIP"`      // ip
 	}
-
-	TokenPolicy struct {
+	MultiLoginPolicy int `yaml:"multiloginpolicy"` // 多端登录配置
+	TokenPolicy      struct {
 		AccessSecret string `yaml:"accessSecret"` // 生成token的密钥
 		AccessExpire int64  `yaml:"accessExpire"` // token过期时间
 	}
@@ -73,6 +82,7 @@ type config struct {
 		EtcdAddr        []string `yaml:"etcdAddr"`
 		UserName        string   `yaml:"userName"`
 		Password        string   `yaml:"password"`
+		Secret          string   `yaml:"secret"` // 加密密钥配置
 	}
 	// 日志相关配置
 	Log struct {
@@ -93,6 +103,13 @@ type config struct {
 		WebsocketMaxConnNum int   `yaml:"websocketMaxConnNum"` // 最大连接数
 		WebsocketMaxMsgLen  int   `yaml:"websocketMaxMsgLen"`  // 最大读取消息
 		WebsocketTimeOut    int   `yaml:"websocketTimeOut"`    // socket连接超时时间
+	}
+	// 回调消息配置
+	Callback struct {
+		CallbackUrl         string         `yaml:"callbackUrl"`
+		CallbackUserOnline  callBackConfig `yaml:"callbackUserOnline"`  // 用户在线回调
+		CallbackUserOffline callBackConfig `yaml:"callbackUserOffline"` // 用户离线回调
+		CallbackUserKickOff callBackConfig `yaml:"callbackUserKickOff"` // 用户下线回调
 	}
 	// kafka相关配置
 	Kafka struct {

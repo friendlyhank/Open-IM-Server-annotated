@@ -19,6 +19,7 @@ import (
 // 用grpc+etcd实现的服务发现与注册
 // todo hank 后面要重点看一下这个服务发现与注册服务
 
+// Resolver需要实现grpc build的接口
 type Resolver struct {
 	cc                 resolver.ClientConn
 	serviceName        string           // 服务名称
@@ -66,13 +67,10 @@ func NewResolver(schema, etcdAddr, serviceName string, operationID string) (*Res
 	return &r, utils.Wrap(err, "")
 }
 
-// GetDefaultConn - 获取默认连接
-func GetDefaultConn(schema, etcdaddr, serviceName string, operationID string) *grpc.ClientConn {
-	con := getConn(schema, etcdaddr, serviceName, operationID)
-	if con != nil {
-		return con
-	}
-	return nil
+func (r1 *Resolver) ResolveNow(rn resolver.ResolveNowOptions) {
+}
+
+func (r1 *Resolver) Close() {
 }
 
 // getConn - 获取rpc连接
@@ -106,6 +104,63 @@ func getConn(schema, etcdaddr, serviceName string, operationID string) *grpc.Cli
 	return r.grpcClientConn
 }
 
+// GetConfigConn - 兜底从配置中获取连接
+func GetConfigConn(serviceName string, operationID string) *grpc.ClientConn {
+	rpcRegisterIP := config.Config.RpcRegisterIP
+	var err error
+	if config.Config.RpcRegisterIP == "" {
+		rpcRegisterIP, err = utils.GetLocalIP()
+		if err != nil {
+			log.Error(operationID, "GetLocalIP failed ", err.Error())
+			return nil
+		}
+	}
+
+	var configPortList []int
+	// todo hank 缺少配置判断
+	//3
+	if config.Config.RpcRegisterName.OpenImMsgName == serviceName {
+		configPortList = config.Config.RpcPort.OpenImMessagePort
+	}
+	//4
+	if config.Config.RpcRegisterName.OpenImPushName == serviceName {
+		configPortList = config.Config.RpcPort.OpenImPushPort
+	}
+	//5
+	if config.Config.RpcRegisterName.OpenImRelayName == serviceName {
+		configPortList = config.Config.RpcPort.OpenImMessageGatewayPort
+	}
+	//7
+	if config.Config.RpcRegisterName.OpenImAuthName == serviceName {
+		configPortList = config.Config.RpcPort.OpenImAuthPort
+	}
+	if len(configPortList) == 0 {
+		log.Error(operationID, "len(configPortList) == 0  ")
+		return nil
+	}
+	target := rpcRegisterIP + ":" + utils.Int32ToString(int32(configPortList[0]))
+	log.Info(operationID, "rpcRegisterIP ", rpcRegisterIP, " port ", configPortList, " grpc target: ", target, " serviceName: ", serviceName)
+	conn, err := grpc.Dial(target, grpc.WithInsecure())
+	if err != nil {
+		log.Error(operationID, "grpc.Dail failed ", err.Error())
+		return nil
+	}
+	log.NewDebug(operationID, utils.GetSelfFuncName(), serviceName, conn)
+	return conn
+}
+
+// GetDefaultConn - 获取默认连接
+func GetDefaultConn(schema, etcdaddr, serviceName string, operationID string) *grpc.ClientConn {
+	con := getConn(schema, etcdaddr, serviceName, operationID)
+	if con != nil {
+		return con
+	}
+	// 兜底从配置中获取连接
+	log.NewWarn(operationID, utils.GetSelfFuncName(), "conn is nil !!!!!", schema, etcdaddr, serviceName, operationID)
+	con = GetConfigConn(serviceName, operationID)
+	return con
+}
+
 // Build - resolver.Builder
 func (r *Resolver) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
 	if r.cli == nil {
@@ -133,12 +188,6 @@ func (r *Resolver) Build(target resolver.Target, cc resolver.ClientConn, opts re
 	return r, nil
 }
 
-func (r1 *Resolver) ResolveNow(rn resolver.ResolveNowOptions) {
-}
-
-func (r1 *Resolver) Close() {
-}
-
 func (r *Resolver) Scheme() string {
 	return r.schema
 }
@@ -164,7 +213,7 @@ func remove(s []resolver.Address, addr string) ([]resolver.Address, bool) {
 	return nil, false
 }
 
-// watch -
+// watch - 监视服务变化
 func (r *Resolver) watch(prefix string, addrList []resolver.Address) {
 	rch := r.cli.Watch(context.Background(), prefix, clientv3.WithPrefix(), clientv3.WithPrefix())
 	for n := range rch {
@@ -201,23 +250,37 @@ func (r *Resolver) watch(prefix string, addrList []resolver.Address) {
 }
 
 var Conn4UniqueList []*grpc.ClientConn // 消息网关所有的连接
+var Conn4UniqueListMtx sync.RWMutex    // 获取连接读写锁
+var IsUpdateStart bool                 // 获取连接标识位
+var IsUpdateStartMtx sync.RWMutex      // 获取连接标识位读写锁
 
 // GetDefaultGatewayConn4Unique - 获取消息网关所有的连接
 func GetDefaultGatewayConn4Unique(schema, etcdaddr, operationID string) []*grpc.ClientConn {
-	// todo hank 为什么要锁
-	Conn4UniqueList = getConn4Unique(schema, etcdaddr, config.Config.RpcRegisterName.OpenImRelayName)
-	go func() {
-		for {
-			select {
-			case <-time.After(time.Second * time.Duration(30)):
-				Conn4UniqueList = getConn4Unique(schema, etcdaddr, config.Config.RpcRegisterName.OpenImRelayName)
+	// 加锁不要重复去获取连接信息
+	IsUpdateStartMtx.Lock()
+	if IsUpdateStart == false {
+		Conn4UniqueList = getConn4Unique(schema, etcdaddr, config.Config.RpcRegisterName.OpenImRelayName)
+		go func() {
+			for {
+				select {
+				case <-time.After(time.Second * time.Duration(30)):
+					Conn4UniqueListMtx.Lock()
+					Conn4UniqueList = getConn4Unique(schema, etcdaddr, config.Config.RpcRegisterName.OpenImRelayName)
+					Conn4UniqueListMtx.Unlock()
+				}
 			}
-		}
-	}()
+		}()
+	}
+	IsUpdateStart = true
+	IsUpdateStartMtx.Unlock()
+
+	Conn4UniqueListMtx.Lock()
 	var clientConnList []*grpc.ClientConn
 	for _, v := range Conn4UniqueList {
 		clientConnList = append(clientConnList, v)
 	}
+	Conn4UniqueListMtx.Unlock()
+
 	grpcConns := clientConnList
 	if len(grpcConns) > 0 {
 		return grpcConns

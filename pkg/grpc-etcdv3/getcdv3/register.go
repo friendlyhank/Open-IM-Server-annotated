@@ -1,16 +1,22 @@
 package getcdv3
 
 import (
+	"Open_IM/pkg/common/config"
 	"Open_IM/pkg/common/log"
 	"Open_IM/pkg/utils"
 	"context"
 	"fmt"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"gopkg.in/yaml.v3"
 	"net"
 	"strconv"
 	"strings"
 	"time"
 )
+
+/*
+ * 服务发现与注册实现组件(这个是重点)
+ */
 
 type RegEtcd struct {
 	cli    *clientv3.Client // ectd客户端
@@ -51,7 +57,7 @@ func RegisterEtcd(schema, etcdAddr, myHost string, myPort int, serviceName strin
 		return fmt.Errorf("create etcd clientv3 client failed, errmsg:%v, etcd addr:%s", err, etcdAddr)
 	}
 
-	//lease
+	//lease  设置租约
 	ctx, cancel := context.WithCancel(context.Background())
 	resp, err := cli.Grant(ctx, int64(ttl))
 	if err != nil {
@@ -61,7 +67,7 @@ func RegisterEtcd(schema, etcdAddr, myHost string, myPort int, serviceName strin
 	log.Info(operationID, "Grant ok, resp ID ", resp.ID)
 
 	//  schema:///serviceName/ip:port ->ip:port
-	serviceValue := net.JoinHostPort(myHost, strconv.Itoa(myPort))
+	serviceValue := net.JoinHostPort(myHost, strconv.Itoa(myPort)) // value未ip+端口
 	serviceKey := GetPrefix(schema, serviceName) + serviceValue
 
 	//set key->value
@@ -70,7 +76,7 @@ func RegisterEtcd(schema, etcdAddr, myHost string, myPort int, serviceName strin
 		return fmt.Errorf("put failed, errmsg:%v， key:%s, value:%s", err, serviceKey, serviceValue)
 	}
 
-	//keepalive
+	//keepalive 续租
 	kresp, err := cli.KeepAlive(ctx, resp.ID)
 	if err != nil {
 		log.Error(operationID, "KeepAlive failed ", err.Error(), args, resp.ID)
@@ -82,11 +88,12 @@ func RegisterEtcd(schema, etcdAddr, myHost string, myPort int, serviceName strin
 		for {
 			select {
 			case pv, ok := <-kresp:
-				if ok == true {
+				if ok == true { // 续租成功
 					log.Debug(operationID, "KeepAlive kresp ok", pv, args)
 				} else {
 					log.Error(operationID, "KeepAlive kresp failed ", pv, args)
 					t := time.NewTicker(time.Duration(ttl/2) * time.Second)
+					// 如果失败了尝试去续租
 					for {
 						select {
 						case <-t.C:
@@ -116,4 +123,43 @@ func RegisterEtcd(schema, etcdAddr, myHost string, myPort int, serviceName strin
 		key:    serviceKey}
 
 	return nil
+}
+
+// UnRegisterEtcd - 取消注册
+func UnRegisterEtcd() {
+	//delete
+	rEtcd.cancel()
+	rEtcd.cli.Delete(rEtcd.ctx, rEtcd.key)
+}
+
+func registerConf(key, conf string) {
+	etcdAddr := strings.Join(config.Config.Etcd.EtcdAddr, ",")
+	cli, err := clientv3.New(clientv3.Config{
+		Endpoints: strings.Split(etcdAddr, ","), DialTimeout: 5 * time.Second})
+
+	if err != nil {
+		panic(err.Error())
+	}
+	//lease
+	if _, err := cli.Put(context.Background(), key, conf); err != nil {
+		fmt.Println("panic, params: ")
+		panic(err.Error())
+	}
+
+}
+
+// RegisterConf - 根据配置去配置服务
+func RegisterConf() {
+	bytes, err := yaml.Marshal(config.Config)
+	if err != nil {
+		panic(err.Error())
+	}
+	secretMD5 := utils.Md5(config.Config.Etcd.Secret)
+	confBytes, err := utils.AesEncrypt(bytes, []byte(secretMD5[0:16]))
+	if err != nil {
+		panic(err.Error())
+	}
+	fmt.Println("start register", secretMD5, GetPrefix(config.Config.Etcd.EtcdSchema, config.ConfName))
+	registerConf(GetPrefix(config.Config.Etcd.EtcdSchema, config.ConfName), string(confBytes))
+	fmt.Println("etcd register conf ok")
 }

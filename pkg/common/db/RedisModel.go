@@ -34,6 +34,16 @@ func (d *DataBases) GetTokenMapByUidPid(userID, platformID string) (map[string]i
 	return mm, err
 }
 
+// SetTokenMapByUidPid - 设置map存储token信息
+func (d *DataBases) SetTokenMapByUidPid(userID string, platformID int, m map[string]int) error {
+	key := uidPidToken + userID + ":" + constant.PlatformIDToName(platformID)
+	mm := make(map[string]interface{})
+	for k, v := range m {
+		mm[k] = v
+	}
+	return d.RDB.HSet(context.Background(), key, mm).Err()
+}
+
 // DeleteTokenByUidPid - 删除指定的token
 func (d *DataBases) DeleteTokenByUidPid(userID string, platformID int, fields []string) error {
 	key := uidPidToken + userID + ":" + constant.PlatformIDToName(platformID)
