@@ -33,3 +33,19 @@ type UserTokenResp struct {
 	CommResp
 	UserToken UserTokenInfo `json:"data"`
 }
+
+// ParseTokenReq - 解析用户token请求
+type ParseTokenReq struct {
+	OperationID string `json:"operationID" binding:"required"`
+}
+
+type ExpireTime struct {
+	ExpireTimeSeconds uint32 `json:"expireTimeSeconds" `
+}
+
+// ParseTokenResp - 解析用户token响应
+type ParseTokenResp struct {
+	CommResp
+	Data       map[string]interface{} `json:"data" swaggerignore:"true"`
+	ExpireTime ExpireTime             `json:"-"`
+}

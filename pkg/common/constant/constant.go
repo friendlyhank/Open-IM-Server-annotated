@@ -9,7 +9,10 @@ const (
 	SingleChatType = 1 // 单聊消息
 	GroupChatType  = 2 // 群聊消息
 	//token 用户token相关
-	NormalToken = 0 // 普通token
+	NormalToken  = 0 // 普通token
+	InValidToken = 1 // 无效token
+	KickedToken  = 2 // 被踢出
+	ExpiredToken = 3 // 已过期
 
 	OnlineStatus  = "online"  // 在线状态
 	OfflineStatus = "offline" // 离线状态
@@ -21,5 +24,7 @@ const (
 )
 
 const LogFileName = "OpenIM.log" // 初始化日志名称
+
+const StatisticsTimeInterval = 60 // 统计信息时间间隔
 
 const CurrentVersion = "v2.3.8-rc0" // 当前版本

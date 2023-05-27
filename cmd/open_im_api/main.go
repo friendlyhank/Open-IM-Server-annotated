@@ -40,6 +40,7 @@ func main() {
 	{
 		authRouterGroup.POST("/user_register", apiAuth.UserRegister) // 用户注册接口
 		authRouterGroup.POST("/user_token", apiAuth.UserToken)       // 用户登录
+		authRouterGroup.POST("/parse_token", apiAuth.ParseToken)     // // 解析token
 	}
 
 	defaultPorts := config.Config.Api.GinPort

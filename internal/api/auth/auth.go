@@ -123,3 +123,25 @@ func UserToken(c *gin.Context) {
 	log.NewInfo(req.OperationID, "UserToken return ", resp)
 	c.JSON(http.StatusOK, resp)
 }
+
+// @Summary 解析当前用户token
+// @Description 解析当前用户token(token在请求头中传入)
+// @Tags 鉴权认证
+// @ID ParseToken
+// @Accept json
+// @Param token header string true "im token"
+// @Param req body api.ParseTokenReq true "secret为openIM密钥, 详细见服务端config.yaml secret字段<br>platform为平台ID"
+// @Produce json
+// @Success 0 {object} api.ParseTokenResp{Data=api.ExpireTime}
+// @Failure 500 {object} api.Swagger500Resp "errCode为500 一般为服务器内部错误"
+// @Failure 400 {object} api.Swagger400Resp "errCode为400 一般为参数输入错误, token未带上等"
+// @Router /auth/parse_token [post]
+func ParseToken(c *gin.Context) {
+	params := api.ParseTokenReq{}
+	if err := c.BindJSON(&params); err != nil {
+		errMsg := " BindJSON failed " + err.Error()
+		log.NewError("0", errMsg)
+		c.JSON(http.StatusOK, gin.H{"errCode": 1001, "errMsg": errMsg})
+		return
+	}
+}

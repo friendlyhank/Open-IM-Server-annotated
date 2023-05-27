@@ -4,6 +4,7 @@ import (
 	"Open_IM/pkg/common/config"
 	"Open_IM/pkg/common/constant"
 	commonDB "Open_IM/pkg/common/db"
+	"Open_IM/pkg/common/log"
 	"Open_IM/pkg/utils"
 	go_redis "github.com/go-redis/redis/v8"
 	"github.com/golang-jwt/jwt/v4"
@@ -20,6 +21,7 @@ import (
 
 /*
  * github.com/golang-jwt/jwt/v4使用第三方token校验工具
+ * token校验组件
  */
 
 type Claims struct {
@@ -79,6 +81,7 @@ func secret() jwt.Keyfunc {
 	}
 }
 
+// GetClaimFromToken - 根据token获取注册声明信息
 func GetClaimFromToken(tokensString string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokensString, &Claims{}, secret())
 	if err != nil {
@@ -101,4 +104,66 @@ func GetClaimFromToken(tokensString string) (*Claims, error) {
 		}
 		return nil, utils.Wrap(constant.ErrTokenNotValidYet, "")
 	}
+}
+
+// ParseToken - 解析token
+func ParseToken(tokensString, operationID string) (claims *Claims, err error) {
+	claims, err = GetClaimFromToken(tokensString)
+	if err != nil {
+		return nil, utils.Wrap(err, "")
+	}
+
+	m, err := commonDB.DB.GetTokenMapByUidPid(claims.UID, claims.Platform)
+	if err != nil {
+		log.NewError(operationID, "get token from redis err", err.Error(), tokensString)
+		return nil, utils.Wrap(constant.ErrTokenInvalid, "get token from redis err")
+	}
+	if m == nil {
+		log.NewError(operationID, "get token from redis err, not in redis ", "m is nil", tokensString)
+		return nil, utils.Wrap(constant.ErrTokenInvalid, "get token from redis err")
+	}
+	if v, ok := m[tokensString]; ok {
+		switch v {
+		case constant.NormalToken:
+			log.NewDebug(operationID, "this is normal return", claims)
+			return claims, nil
+		case constant.KickedToken:
+			log.Error(operationID, "this token has been kicked by other same terminal ", constant.ErrTokenKicked)
+			return nil, utils.Wrap(constant.ErrTokenKicked, "this token has been kicked by other same terminal ")
+		default:
+			return nil, utils.Wrap(constant.ErrTokenUnknown, "")
+		}
+	}
+	log.NewError(operationID, "redis token map not find", constant.ErrTokenUnknown)
+	return nil, utils.Wrap(constant.ErrTokenUnknown, "redis token map not find")
+}
+
+// WsVerifyToken - 校验websocket的token信息
+func WsVerifyToken(token, uid string, platformID string, operationID string) (bool, error, string) {
+	argMsg := "args: token: " + token + " operationID: " + operationID + " userID: " + uid + " platformID: " + constant.PlatformIDToName(utils.StringToInt(platformID))
+	claims, err := ParseToken(token, operationID)
+	if err != nil {
+		//if errors.Is(err, constant.ErrTokenUnknown) {
+		//	errMsg := "ParseToken failed ErrTokenUnknown " + err.Error()
+		//	log.Error(operationID, errMsg)
+		//}
+		//e := errors.Unwrap(err)
+		//if errors.Is(e, constant.ErrTokenUnknown) {
+		//	errMsg := "ParseToken failed ErrTokenUnknown " + e.Error()
+		//	log.Error(operationID, errMsg)
+		//}
+
+		errMsg := "parse token err " + err.Error() + argMsg
+		return false, utils.Wrap(err, errMsg), errMsg
+	}
+	if claims.UID != uid {
+		errMsg := " uid is not same to token uid " + argMsg + " claims.UID: " + claims.UID
+		return false, utils.Wrap(constant.ErrTokenDifferentUserID, errMsg), errMsg
+	}
+	if claims.Platform != constant.PlatformIDToName(utils.StringToInt(platformID)) {
+		errMsg := " platform is not same to token platform " + argMsg + " claims platformID: " + claims.Platform
+		return false, utils.Wrap(constant.ErrTokenDifferentPlatformID, errMsg), errMsg
+	}
+	log.NewDebug(operationID, utils.GetSelfFuncName(), " check ok ", claims.UID, uid, claims.Platform)
+	return true, nil, ""
 }

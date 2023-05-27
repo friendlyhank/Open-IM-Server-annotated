@@ -4,10 +4,12 @@ import (
 	"Open_IM/pkg/common/config"
 	"Open_IM/pkg/common/constant"
 	"Open_IM/pkg/common/log"
+	"Open_IM/pkg/common/token_verify"
 	"Open_IM/pkg/utils"
 	"bytes"
 	"compress/gzip"
 	"github.com/gorilla/websocket"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -31,15 +33,13 @@ type WServer struct {
 	wsAddr       string                         // 地址
 	wsMaxConnNum int                            // 最大连接数
 	wsUpGrader   *websocket.Upgrader            // socket初始化配置
-	wsConnToUser map[*UserConn]map[int]string // 这个用处在于多端登录的时候，防止根据userid删除误删除新的conn
-	wsUserToConn map[string]map[int]*UserConn // 存储用户连接信息
+	wsUserToConn map[string]map[int][]*UserConn // 存储用户连接信息
 }
 
 // 初始化WServer
 func (ws *WServer) onInit(wsPort int) {
 	ws.wsAddr = ":" + utils.IntToString(wsPort)
-	ws.wsConnToUser = make(map[*UserConn]map[int]string)
-	ws.wsUserToConn = make(map[string]map[int]*UserConn)
+	ws.wsUserToConn = make(map[string]map[int][]*UserConn)
 	ws.wsUpGrader = &websocket.Upgrader{
 		HandshakeTimeout: time.Duration(config.Config.LongConnSvr.WebsocketTimeOut) * time.Second,
 		ReadBufferSize:   config.Config.LongConnSvr.WebsocketMaxMsgLen,
@@ -166,8 +166,8 @@ func (ws *WServer) addUserConn(uid string, platformID int, conn *UserConn, token
 	defer rwLock.Unlock()
 	log.Info(operationID, utils.GetSelfFuncName(), " args: ", uid, platformID, conn, token, "ip: ", conn.RemoteAddr().String())
 
-	// 用户上线回调
-	// 多端用户踢出逻辑
+	// todo hank 用户上线回调
+	//todo hank 多端用户踢出逻辑
 
 	if oldConnMap, ok := ws.wsUserToConn[uid]; ok {
 		oldConnMap[platformID] = conn
@@ -182,7 +182,7 @@ func (ws *WServer) addUserConn(uid string, platformID int, conn *UserConn, token
 	if oldStringMap, ok := ws.wsConnToUser[conn]; ok {
 		oldStringMap[platformID] = uid
 		ws.wsConnToUser[conn] = oldStringMap
-	}else{
+	} else {
 		i := make(map[int]string)
 		i[platformID] = uid
 		ws.wsConnToUser[conn] = i
@@ -218,7 +218,7 @@ func (ws *WServer) delUserConn(conn *UserConn) {
 				count = count + len(v)
 			}
 			log.Debug(operationID, "WS delete operation", "", "wsUser deleted", ws.wsUserToConn, "disconnection_uid", uid, "disconnection_platform", platform, "online_user_num", len(ws.wsUserToConn), "online_conn_num", count)
-		}else{
+		} else {
 			log.Debug(operationID, "WS delete operation", "", "wsUser deleted", ws.wsUserToConn, "disconnection_uid", uid, "disconnection_platform", platform, "online_user_num", len(ws.wsUserToConn))
 		}
 		delete(ws.wsConnToUser, conn)
@@ -252,7 +252,65 @@ func (ws *WServer) headerCheck(w http.ResponseWriter, r *http.Request, operation
 	status := http.StatusUnauthorized
 	query := r.URL.Query()
 	if len(query["token"]) != 0 && len(query["sendID"]) != 0 && len(query["platformID"]) != 0 {
-		return true, compression
+		if ok, err, msg := token_verify.WsVerifyToken(query["token"][0], query["sendID"][0], query["platformID"][0], operationID); !ok {
+			if errors.Is(err, constant.ErrTokenExpired) {
+				status = int(constant.ErrTokenExpired.ErrCode)
+			}
+			if errors.Is(err, constant.ErrTokenInvalid) {
+				status = int(constant.ErrTokenInvalid.ErrCode)
+			}
+			if errors.Is(err, constant.ErrTokenMalformed) {
+				status = int(constant.ErrTokenMalformed.ErrCode)
+			}
+			if errors.Is(err, constant.ErrTokenNotValidYet) {
+				status = int(constant.ErrTokenNotValidYet.ErrCode)
+			}
+			if errors.Is(err, constant.ErrTokenUnknown) {
+				status = int(constant.ErrTokenUnknown.ErrCode)
+			}
+			if errors.Is(err, constant.ErrTokenKicked) {
+				status = int(constant.ErrTokenKicked.ErrCode)
+			}
+			if errors.Is(err, constant.ErrTokenDifferentPlatformID) {
+				status = int(constant.ErrTokenDifferentPlatformID.ErrCode)
+			}
+			if errors.Is(err, constant.ErrTokenDifferentUserID) {
+				status = int(constant.ErrTokenDifferentUserID.ErrCode)
+			}
+			//switch errors.Cause(err) {
+			//case constant.ErrTokenExpired:
+			//	status = int(constant.ErrTokenExpired.ErrCode)
+			//case constant.ErrTokenInvalid:
+			//	status = int(constant.ErrTokenInvalid.ErrCode)
+			//case constant.ErrTokenMalformed:
+			//	status = int(constant.ErrTokenMalformed.ErrCode)
+			//case constant.ErrTokenNotValidYet:
+			//	status = int(constant.ErrTokenNotValidYet.ErrCode)
+			//case constant.ErrTokenUnknown:
+			//	status = int(constant.ErrTokenUnknown.ErrCode)
+			//case constant.ErrTokenKicked:
+			//	status = int(constant.ErrTokenKicked.ErrCode)
+			//case constant.ErrTokenDifferentPlatformID:
+			//	status = int(constant.ErrTokenDifferentPlatformID.ErrCode)
+			//case constant.ErrTokenDifferentUserID:
+			//	status = int(constant.ErrTokenDifferentUserID.ErrCode)
+			//}
+
+			log.Error(operationID, "Token verify failed ", "query ", query, msg, err.Error(), "status: ", status)
+			w.Header().Set("Sec-Websocket-Version", "13")
+			w.Header().Set("ws_err_msg", err.Error())
+			http.Error(w, err.Error(), status)
+			return false, false
+		} else {
+			if r.Header.Get("compression") == "gzip" {
+				compression = true
+			}
+			if len(query["compression"]) != 0 && query["compression"][0] == "gzip" {
+				compression = true
+			}
+			log.Info(operationID, "Connection Authentication Success", "", "token ", query["token"][0], "userID ", query["sendID"][0], "platformID ", query["platformID"][0], "compression", compression)
+			return true, compression
+		}
 	} else {
 		status = int(constant.ErrArgs.ErrCode)
 		log.Error(operationID, "Args err ", "query ", query)

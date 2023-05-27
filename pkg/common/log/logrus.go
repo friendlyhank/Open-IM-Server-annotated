@@ -12,6 +12,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+/*
+ * 日志信息组件
+ */
+
 var logger *Logger
 
 type Logger struct {
@@ -21,7 +25,6 @@ type Logger struct {
 
 func init() {
 	logger = loggerInit("")
-
 }
 
 // NewPrivateLog - 初始化日志
@@ -110,7 +113,7 @@ func Debug(OperationID string, args ...interface{}) {
 	}).Debugln(args)
 }
 
-//Deprecated
+// Deprecated
 func Warning(token, OperationID, format string, args ...interface{}) {
 	logger.WithFields(logrus.Fields{
 		"PID":         logger.Pid,

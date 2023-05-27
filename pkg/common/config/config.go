@@ -81,6 +81,12 @@ type config struct {
 		RemainRotationCount uint   `yaml:"remainRotationCount"`
 		RemainLogLevel      uint   `yaml:"remainLogLevel"` // 日志等级
 	}
+	// 模块名称
+	ModuleName struct {
+		LongConnSvrName string `yaml:"longConnSvrName"`
+		MsgTransferName string `yaml:"msgTransferName"`
+		PushName        string `yaml:"pushName"`
+	}
 	// 长连接相关配置
 	LongConnSvr struct {
 		WebsocketPort       []int `yaml:"openImWsPort"`        // 端口
