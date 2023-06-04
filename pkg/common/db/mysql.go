@@ -74,11 +74,16 @@ func initMysqlDB() {
 
 	// 自动生成对应的表
 	db.AutoMigrate(
+		&Friend{},
 		&User{},
 		&ChatLog{},
 	)
 	db.Set("gorm:table_options", "CHARSET=utf8")
 	db.Set("gorm:table_options", "collation=utf8_unicode_ci")
+
+	if !db.Migrator().HasTable(&Friend{}) {
+		db.Migrator().CreateTable(&Friend{})
+	}
 	if !db.Migrator().HasTable(&User{}) {
 		db.Migrator().CreateTable(&User{})
 	}

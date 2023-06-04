@@ -69,6 +69,7 @@ type config struct {
 	// rpc相关端口
 	RpcPort struct {
 		OpenImUserPort           []int `yaml:"openImUserPort"`           // 用户相关rpc端口
+		OpenImFriendPort         []int `yaml:"openImFriendPort"`         // 好友相关rpc端口
 		OpenImMessagePort        []int `yaml:"openImMessagePort"`        // im消息端口
 		OpenImMessageGatewayPort []int `yaml:"openImMessageGatewayPort"` // im网关端口
 		OpenImPushPort           []int `yaml:"openImPushPort"`           // im消息推送端口
@@ -76,11 +77,12 @@ type config struct {
 	}
 	// rpc注册的服务
 	RpcRegisterName struct {
-		OpenImUserName  string `yaml:"openImUserName"`  // 用户信息获取
-		OpenImMsgName   string `yaml:"openImMsgName"`   // im消息名称
-		OpenImPushName  string `yaml:"openImPushName"`  // 推送名称
-		OpenImRelayName string `yaml:"openImRelayName"` // 消息转发,真正发送数据服务
-		OpenImAuthName  string `yaml:"openImAuthName"`  // 授权验证，包含注册，获取用户token等
+		OpenImUserName   string `yaml:"openImUserName"`   // 用户信息获取
+		OpenImFriendName string `yaml:"openImFriendName"` // 好友相关设置
+		OpenImMsgName    string `yaml:"openImMsgName"`    // im消息名称
+		OpenImPushName   string `yaml:"openImPushName"`   // 推送名称
+		OpenImRelayName  string `yaml:"openImRelayName"`  // 消息转发,真正发送数据服务
+		OpenImAuthName   string `yaml:"openImAuthName"`   // 授权验证，包含注册，获取用户token等
 	}
 	// etcd相关配置
 	Etcd struct {
@@ -114,13 +116,17 @@ type config struct {
 	ChatPersistenceMysql bool `yaml:"chatpersistencemysql"` // 是否将聊天消息持久化到数据库
 	// 回调消息配置
 	Callback struct {
-		CallbackUrl         string         `yaml:"callbackUrl"`
-		CallbackUserOnline  callBackConfig `yaml:"callbackUserOnline"`  // 用户在线回调
-		CallbackUserOffline callBackConfig `yaml:"callbackUserOffline"` // 用户离线回调
-		CallbackUserKickOff callBackConfig `yaml:"callbackUserKickOff"` // 用户下线回调
+		CallbackUrl             string         `yaml:"callbackUrl"`
+		CallbackUserOnline      callBackConfig `yaml:"callbackUserOnline"`      // 用户在线回调
+		CallbackUserOffline     callBackConfig `yaml:"callbackUserOffline"`     // 用户离线回调
+		CallbackUserKickOff     callBackConfig `yaml:"callbackUserKickOff"`     // 用户下线回调
+		CallbackBeforeAddFriend callBackConfig `yaml:"callbackBeforeAddFriend"` // 添加好友前回调
 	}
 	Demo struct {
 		Port []int `yaml:"openImDemoPort"`
+	}
+	Manager struct {
+		AppManagerUid []string `yaml:"appManagerUid"` // 管理员用户
 	}
 	// kafka相关配置
 	Kafka struct {

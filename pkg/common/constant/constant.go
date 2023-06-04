@@ -33,9 +33,14 @@ const (
 	OfflineStatus = "offline" // 离线状态
 
 	//callbackCommand 回调指令
-	CallbackUserOnlineCommand  = "callbackUserOnlineCommand"  // 在线回调指令
-	CallbackUserOfflineCommand = "callbackUserOfflineCommand" // 离线回调指令
-	CallbackUserKickOffCommand = "callbackUserKickOffCommand" // 踢出回调指令
+	CallbackUserOnlineCommand      = "callbackUserOnlineCommand"      // 在线回调指令
+	CallbackUserOfflineCommand     = "callbackUserOfflineCommand"     // 离线回调指令
+	CallbackUserKickOffCommand     = "callbackUserKickOffCommand"     // 踢出回调指令
+	CallbackBeforeAddFriendCommand = "callbackBeforeAddFriendCommand" // 添加好友前指令
+
+	//callback actionCode
+	ActionAllow     = 0 // 回调失败继续往下操作
+	ActionForbidden = 1 // 回调失败不继续往下
 )
 
 const (

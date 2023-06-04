@@ -6,6 +6,26 @@ import "time"
  * 对应表结构
  */
 
+// message FriendInfo{
+// string OwnerUserID = 1;
+// string Remark = 2;
+// int64 CreateTime = 3;
+// UserInfo FriendUser = 4;
+// int32 AddSource = 5;
+// string OperatorUserID = 6;
+// string Ex = 7;
+// }
+// open_im_sdk.FriendInfo(FriendUser) != imdb.Friend(FriendUserID)
+type Friend struct {
+	OwnerUserID    string    `gorm:"column:owner_user_id;primary_key;size:64"`  // 本人用户id
+	FriendUserID   string    `gorm:"column:friend_user_id;primary_key;size:64"` // 好友用户id
+	Remark         string    `gorm:"column:remark;size:255"`                    // 备注
+	CreateTime     time.Time `gorm:"column:create_time"`                        // 创建时间
+	AddSource      int32     `gorm:"column:add_source"`                         // 来源
+	OperatorUserID string    `gorm:"column:operator_user_id;size:64"`           // 操作者用户id
+	Ex             string    `gorm:"column:ex;size:1024"`
+}
+
 // string UserID = 1;
 // string Nickname = 2;
 // string FaceUrl = 3;

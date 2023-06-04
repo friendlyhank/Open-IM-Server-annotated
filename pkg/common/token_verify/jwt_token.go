@@ -106,6 +106,17 @@ func GetClaimFromToken(tokensString string) (*Claims, error) {
 	}
 }
 
+// CheckAccess - 校验操作的权限
+func CheckAccess(OpUserID string, OwnerUserID string) bool {
+	if utils.IsContain(OpUserID, config.Config.Manager.AppManagerUid) {
+		return true
+	}
+	if OpUserID == OwnerUserID {
+		return true
+	}
+	return false
+}
+
 // 从token中获取用户id
 func GetUserIDFromToken(token string, operationID string) (bool, string, string) {
 	claims, err := ParseToken(token, operationID)

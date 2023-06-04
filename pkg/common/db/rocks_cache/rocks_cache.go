@@ -13,8 +13,31 @@ import (
  */
 
 const (
-	userInfoCache = "USER_INFO_CACHE:"
+	userInfoCache       = "USER_INFO_CACHE:"       // 好友缓存
+	friendRelationCache = "FRIEND_RELATION_CACHE:" // 好友关系缓存key
 )
+
+// 获取某个用户的好友列表
+func GetFriendIDListFromCache(userID string) ([]string, error) {
+	getFriendIDList := func() (string, error) {
+		friendIDList, err := imdb.GetFriendIDListByUserID(userID)
+		if err != nil {
+			return "", utils.Wrap(err, "")
+		}
+		bytes, err := json.Marshal(friendIDList)
+		if err != nil {
+			return "", utils.Wrap(err, "")
+		}
+		return string(bytes), nil
+	}
+	friendIDListStr, err := db.DB.Rc.Fetch(friendRelationCache+userID, time.Second*30*60, getFriendIDList)
+	if err != nil {
+		return nil, utils.Wrap(err, "")
+	}
+	var friendIDList []string
+	err = json.Unmarshal([]byte(friendIDListStr), &friendIDList)
+	return friendIDList, utils.Wrap(err, "")
+}
 
 // GetUserInfoFromCache - 从缓存中获取用户信息
 func GetUserInfoFromCache(userID string) (*db.User, error) {

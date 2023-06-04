@@ -2,6 +2,7 @@ package main
 
 import (
 	apiAuth "Open_IM/internal/api/auth"
+	"Open_IM/internal/api/friend"
 	"Open_IM/internal/api/user"
 	"Open_IM/pkg/common/config"
 	"Open_IM/pkg/common/constant"
@@ -37,12 +38,17 @@ func main() {
 	r.Use(utils.CorsHandler())
 	log.Info("load config: ", config.Config)
 
-	// user routing group, which handles user registration and login services
+	// user routing group, which handles user registration and login services - 用户相关信息
 	userRouterGroup := r.Group("/user")
 	{
-		userRouterGroup.POST("/get_self_user_info", user.GetSelfUserInfo) // 获取用户信息
+		userRouterGroup.POST("/get_users_info", user.GetUsersPublicInfo)  // 获取用户信息
+		userRouterGroup.POST("/get_self_user_info", user.GetSelfUserInfo) // 获取自己用户信息
 	}
-
+	//friend routing group
+	friendRouterGroup := r.Group("/friend")
+	{
+		friendRouterGroup.POST("/add_friend", friend.AddFriend) // 添加好友
+	}
 	//certificate 授权验证
 	authRouterGroup := r.Group("/auth")
 	{

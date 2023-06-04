@@ -23,8 +23,9 @@ var (
 	ErrTokenDifferentPlatformID = ErrInfo{707, TokenDifferentPlatformIDMsg.Error()} // token对应平台不同错误
 	ErrTokenDifferentUserID     = ErrInfo{708, TokenDifferentUserIDMsg.Error()}     // token对应用户id不同错误
 
-	ErrDB   = ErrInfo{ErrCode: 802, ErrMsg: DBMsg.Error()}   // 数据库mysql错误
-	ErrArgs = ErrInfo{ErrCode: 803, ErrMsg: ArgsMsg.Error()} // 参数错误
+	ErrAccess = ErrInfo{ErrCode: 801, ErrMsg: AccessMsg.Error()} // 没有权限操作
+	ErrDB     = ErrInfo{ErrCode: 802, ErrMsg: DBMsg.Error()}     // 数据库mysql错误
+	ErrArgs   = ErrInfo{ErrCode: 803, ErrMsg: ArgsMsg.Error()}   // 参数错误
 )
 
 var (
@@ -36,6 +37,7 @@ var (
 	TokenUserKickedMsg          = errors.New("user has been kicked")
 	TokenDifferentPlatformIDMsg = errors.New("different platformID")
 	TokenDifferentUserIDMsg     = errors.New("different userID")
+	AccessMsg                   = errors.New("no permission") // 操作权限
 
 	DBMsg   = errors.New("db failed")
 	ArgsMsg = errors.New("args failed")
