@@ -53,3 +53,8 @@ func (e ErrInfo) Error() string {
 func (e *ErrInfo) Code() int32 {
 	return e.ErrCode
 }
+
+const (
+	NoError         = 0
+	FormattingError = 10001 // json解析错误
+)

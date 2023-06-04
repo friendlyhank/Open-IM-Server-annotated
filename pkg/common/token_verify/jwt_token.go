@@ -106,6 +106,17 @@ func GetClaimFromToken(tokensString string) (*Claims, error) {
 	}
 }
 
+// 从token中获取用户id
+func GetUserIDFromToken(token string, operationID string) (bool, string, string) {
+	claims, err := ParseToken(token, operationID)
+	if err != nil {
+		log.Error(operationID, "ParseToken failed, ", err.Error(), token)
+		return false, "", err.Error()
+	}
+	log.Debug(operationID, "token claims.ExpiresAt.Second() ", claims.ExpiresAt.Unix())
+	return true, claims.UID, ""
+}
+
 // ParseToken - 解析token
 func ParseToken(tokensString, operationID string) (claims *Claims, err error) {
 	claims, err = GetClaimFromToken(tokensString)

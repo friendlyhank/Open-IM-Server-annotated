@@ -38,6 +38,11 @@ type config struct {
 		GinPort  []int  `yaml:"openImApiPort"` // gin端口设置
 		ListenIP string `yaml:"listenIP"`      // ip
 	}
+	// cmdapi相关服务
+	CmsApi struct {
+		GinPort  []int  `yaml:"openImCmsApiPort"`
+		ListenIP string `yaml:"listenIP"`
+	}
 	MultiLoginPolicy int `yaml:"multiloginpolicy"` // 多端登录配置
 	TokenPolicy      struct {
 		AccessSecret string `yaml:"accessSecret"` // 生成token的密钥
@@ -63,6 +68,7 @@ type config struct {
 	}
 	// rpc相关端口
 	RpcPort struct {
+		OpenImUserPort           []int `yaml:"openImUserPort"`           // 用户相关rpc端口
 		OpenImMessagePort        []int `yaml:"openImMessagePort"`        // im消息端口
 		OpenImMessageGatewayPort []int `yaml:"openImMessageGatewayPort"` // im网关端口
 		OpenImPushPort           []int `yaml:"openImPushPort"`           // im消息推送端口
@@ -70,6 +76,7 @@ type config struct {
 	}
 	// rpc注册的服务
 	RpcRegisterName struct {
+		OpenImUserName  string `yaml:"openImUserName"`  // 用户信息获取
 		OpenImMsgName   string `yaml:"openImMsgName"`   // im消息名称
 		OpenImPushName  string `yaml:"openImPushName"`  // 推送名称
 		OpenImRelayName string `yaml:"openImRelayName"` // 消息转发,真正发送数据服务
@@ -104,12 +111,16 @@ type config struct {
 		WebsocketMaxMsgLen  int   `yaml:"websocketMaxMsgLen"`  // 最大读取消息
 		WebsocketTimeOut    int   `yaml:"websocketTimeOut"`    // socket连接超时时间
 	}
+	ChatPersistenceMysql bool `yaml:"chatpersistencemysql"` // 是否将聊天消息持久化到数据库
 	// 回调消息配置
 	Callback struct {
 		CallbackUrl         string         `yaml:"callbackUrl"`
 		CallbackUserOnline  callBackConfig `yaml:"callbackUserOnline"`  // 用户在线回调
 		CallbackUserOffline callBackConfig `yaml:"callbackUserOffline"` // 用户离线回调
 		CallbackUserKickOff callBackConfig `yaml:"callbackUserKickOff"` // 用户下线回调
+	}
+	Demo struct {
+		Port []int `yaml:"openImDemoPort"`
 	}
 	// kafka相关配置
 	Kafka struct {
@@ -133,7 +144,6 @@ type config struct {
 			MsgToPush  string `yaml:"msgToPush"`  // 推送消息
 		}
 	}
-	ChatPersistenceMysql bool `yaml:"chatpersistencemysql"` // 是否将聊天消息持久化到数据库
 	// Prometheus 监控
 	Prometheus struct {
 		MessageGatewayPrometheusPort []int `yaml:"messageGatewayPrometheusPort"`

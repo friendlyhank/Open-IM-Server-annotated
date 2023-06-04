@@ -4,6 +4,7 @@ import (
 	"Open_IM/pkg/common/config"
 	"context"
 	"fmt"
+	"github.com/dtm-labs/rockscache"
 	go_redis "github.com/go-redis/redis/v8"
 	"time"
 )
@@ -13,6 +14,8 @@ var DB DataBases
 type DataBases struct {
 	MysqlDB mysqlDB                  // 数据库连接
 	RDB     go_redis.UniversalClient // redis连接
+	Rc      *rockscache.Client       // 强一直性缓存锁
+	WeakRc  *rockscache.Client       // 弱一致性缓存锁
 }
 
 func init() {
@@ -48,5 +51,12 @@ func init() {
 			panic(err.Error() + " redis " + config.Config.Redis.DBAddress[0] + config.Config.Redis.DBUserName + config.Config.Redis.DBPassWord)
 		}
 	}
+	// 强一致性缓存，当一个key被标记删除，其他请求线程会被锁住轮询直到新的key生成，适合各种同步的拉取, 如果弱一致可能导致拉取还是老数据，毫无意义
+	DB.Rc = rockscache.NewClient(DB.RDB, rockscache.NewDefaultOptions())
+	DB.Rc.Options.StrongConsistency = true
+
+	// 弱一致性缓存，当一个key被标记删除，其他请求线程直接返回该key的value，适合高频并且生成很缓存很慢的情况 如大群发消息缓存的缓存
+	DB.WeakRc = rockscache.NewClient(DB.RDB, rockscache.NewDefaultOptions())
+	DB.WeakRc.Options.StrongConsistency = false
 	fmt.Println("init mysql redis mongo ok ")
 }

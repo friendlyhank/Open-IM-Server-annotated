@@ -2,6 +2,7 @@ package main
 
 import (
 	apiAuth "Open_IM/internal/api/auth"
+	"Open_IM/internal/api/user"
 	"Open_IM/pkg/common/config"
 	"Open_IM/pkg/common/constant"
 	"Open_IM/pkg/common/log"
@@ -35,6 +36,12 @@ func main() {
 	r.Use(gin.Recovery()) // 捕获panic
 	r.Use(utils.CorsHandler())
 	log.Info("load config: ", config.Config)
+
+	// user routing group, which handles user registration and login services
+	userRouterGroup := r.Group("/user")
+	{
+		userRouterGroup.POST("/get_self_user_info", user.GetSelfUserInfo) // 获取用户信息
+	}
 
 	//certificate 授权验证
 	authRouterGroup := r.Group("/auth")

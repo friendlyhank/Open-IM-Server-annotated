@@ -22,7 +22,7 @@ type UserRegisterResp struct {
 
 // UserTokenReq - 用户登录请求
 type UserTokenReq struct {
-	Secret      string `json:"secret" binding:"required,max=32"`
+	Secret      string `json:"secret"`
 	Platform    int32  `json:"platform" binding:"required,min=1,max=12"`
 	UserID      string `json:"userID" binding:"required,min=1,max=64"`
 	LoginIp     string `json:"loginIp"`

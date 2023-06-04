@@ -108,17 +108,20 @@ func (r *RPCServer) SuperGroupOnlineBatchPushOneMsg(_ context.Context, req *pbRe
 			UserID: v,
 		}
 		userConnMap := ws.getUserAllCons(v)
-		for platform, userConn := range userConnMap {
-			if userConn != nil {
-				temp := &pbRelay.SingleMsgToUserPlatform{
-					RecvID:         v,
-					RecvPlatFormID: int32(platform),
-				}
-				resultCode := sendMsgBatchToUser(userConn, replyBytes.Bytes(), req, platform, v)
-				if resultCode == 0 {
-					tempT.OnlinePush = true
-					temp.ResultCode = resultCode
-					resp = append(resp, temp)
+		for platform, userConns := range userConnMap {
+			if userConns != nil {
+				log.NewWarn(req.OperationID, "conns is ", len(userConns), platform, userConns)
+				for _, userConn := range userConns {
+					temp := &pbRelay.SingleMsgToUserPlatform{
+						RecvID:         v,
+						RecvPlatFormID: int32(platform),
+					}
+					resultCode := sendMsgBatchToUser(userConn, replyBytes.Bytes(), req, platform, v)
+					if resultCode == 0 {
+						tempT.OnlinePush = true
+						temp.ResultCode = resultCode
+						resp = append(resp, temp)
+					}
 				}
 			}
 		}
