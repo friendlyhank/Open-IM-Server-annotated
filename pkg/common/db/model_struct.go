@@ -16,6 +16,7 @@ import "time"
 // string Ex = 7;
 // }
 // open_im_sdk.FriendInfo(FriendUser) != imdb.Friend(FriendUserID)
+// 好友表
 type Friend struct {
 	OwnerUserID    string    `gorm:"column:owner_user_id;primary_key;size:64"`  // 本人用户id
 	FriendUserID   string    `gorm:"column:friend_user_id;primary_key;size:64"` // 好友用户id
@@ -24,6 +25,31 @@ type Friend struct {
 	AddSource      int32     `gorm:"column:add_source"`                         // 来源
 	OperatorUserID string    `gorm:"column:operator_user_id;size:64"`           // 操作者用户id
 	Ex             string    `gorm:"column:ex;size:1024"`
+}
+
+// message FriendRequest{
+// string  FromUserID = 1;
+// string ToUserID = 2;
+// int32 HandleResult = 3;
+// string ReqMsg = 4;
+// int64 CreateTime = 5;
+// string HandlerUserID = 6;
+// string HandleMsg = 7;
+// int64 HandleTime = 8;
+// string Ex = 9;
+// }
+// open_im_sdk.FriendRequest(nickname, farce url ...) != imdb.FriendRequest
+// 好友请求表
+type FriendRequest struct {
+	FromUserID    string    `gorm:"column:from_user_id;primary_key;size:64"`
+	ToUserID      string    `gorm:"column:to_user_id;primary_key;size:64"`
+	HandleResult  int32     `gorm:"column:handle_result"`
+	ReqMsg        string    `gorm:"column:req_msg;size:255"`
+	CreateTime    time.Time `gorm:"column:create_time"`
+	HandlerUserID string    `gorm:"column:handler_user_id;size:64"`
+	HandleMsg     string    `gorm:"column:handle_msg;size:255"`
+	HandleTime    time.Time `gorm:"column:handle_time"`
+	Ex            string    `gorm:"column:ex;size:1024"`
 }
 
 // string UserID = 1;

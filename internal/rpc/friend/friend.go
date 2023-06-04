@@ -3,6 +3,7 @@ package friend
 import (
 	"Open_IM/pkg/common/config"
 	"Open_IM/pkg/common/constant"
+	"Open_IM/pkg/common/db"
 	imdb "Open_IM/pkg/common/db/mysql_model/im_mysql_model"
 	rocksCache "Open_IM/pkg/common/db/rocks_cache"
 	"Open_IM/pkg/common/log"
@@ -15,6 +16,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type friendServer struct {
@@ -138,6 +140,21 @@ func (s *friendServer) AddFriend(ctx context.Context, req *pbFriend.AddFriendReq
 			log.NewError(req.CommID.OperationID, "GetUserByUserID failed ", err.Error(), req.CommID.ToUserID)
 			return &pbFriend.AddFriendResp{CommonResp: &pbFriend.CommonResp{ErrCode: constant.ErrDB.ErrCode, ErrMsg: constant.ErrDB.ErrMsg}}, nil
 		}
+		friendRequest := db.FriendRequest{
+			HandleResult: 0, ReqMsg: req.ReqMsg, CreateTime: time.Now()}
+		utils.CopyStructFields(&friendRequest, req.CommID)
+		// {openIM001 openIM002 0 test add friend 0001-01-01 00:00:00 +0000 UTC   0001-01-01 00:00:00 +0000 UTC }]
+		log.NewDebug(req.CommID.OperationID, "UpdateFriendApplication args ", friendRequest)
+		//err := imdb.InsertFriendApplication(&friendRequest)
+		err := imdb.InsertFriendApplication(&friendRequest,
+			map[string]interface{}{"handle_result": 0, "req_msg": friendRequest.ReqMsg, "create_time": friendRequest.CreateTime,
+				"handler_user_id": "", "handle_msg": "", "handle_time": utils.UnixSecondToTime(0), "ex": ""})
+		if err != nil {
+			log.NewError(req.CommID.OperationID, "UpdateFriendApplication failed ", err.Error(), friendRequest)
+			return &pbFriend.AddFriendResp{CommonResp: &pbFriend.CommonResp{ErrCode: constant.ErrDB.ErrCode, ErrMsg: constant.ErrDB.ErrMsg}}, nil
+		}
+
+		// todo hank 发送添加好友通知
 	}
 	//Establish a latest relationship in the friend request table
 

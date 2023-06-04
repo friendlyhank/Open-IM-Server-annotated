@@ -76,6 +76,7 @@ func initMysqlDB() {
 	db.AutoMigrate(
 		&Friend{},
 		&User{},
+		&FriendRequest{},
 		&ChatLog{},
 	)
 	db.Set("gorm:table_options", "CHARSET=utf8")
@@ -83,6 +84,9 @@ func initMysqlDB() {
 
 	if !db.Migrator().HasTable(&Friend{}) {
 		db.Migrator().CreateTable(&Friend{})
+	}
+	if !db.Migrator().HasTable(&FriendRequest{}) {
+		db.Migrator().CreateTable(&FriendRequest{})
 	}
 	if !db.Migrator().HasTable(&User{}) {
 		db.Migrator().CreateTable(&User{})
