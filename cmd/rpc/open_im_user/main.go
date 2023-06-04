@@ -1,4 +1,4 @@
-package open_im_user
+package main
 
 import (
 	"Open_IM/internal/rpc/user"
