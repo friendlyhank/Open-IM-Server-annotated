@@ -44,10 +44,58 @@ func (ws *WServer) msgParse(conn *UserConn, binaryMsg []byte) {
 		}
 	}
 	switch m.ReqIdentifier {
+	case constant.WSGetNewestSeq:
+		log.NewInfo(m.OperationID, "getSeqReq ", m.SendID, m.MsgIncr, m.ReqIdentifier)
+		ws.getSeqReq(conn, &m)
 	case constant.WSSendMsg: // 发送消息
 		log.NewInfo(m.OperationID, "sendMsgReq ", m.SendID, m.MsgIncr, m.ReqIdentifier)
 		ws.sendMsgReq(conn, &m)
 	}
+}
+
+// getSeqReq - 获取最新的req序号
+func (ws *WServer) getSeqReq(conn *UserConn, m *Req) {
+	log.NewInfo(m.OperationID, "Ws call success to getNewSeq", m.MsgIncr, m.SendID, m.ReqIdentifier)
+	nReply := new(sdk_ws.GetMaxAndMinSeqResp)
+	isPass, errCode, errMsg, data := ws.argsValidate(m, constant.WSGetNewestSeq, m.OperationID)
+	log.Info(m.OperationID, "argsValidate ", isPass, errCode, errMsg)
+	if isPass {
+		rpcReq := sdk_ws.GetMaxAndMinSeqReq{}
+		// todo hank groupid
+		rpcReq.UserID = m.SendID
+		rpcReq.OperationID = m.OperationID
+		log.Debug(m.OperationID, "Ws call success to getMaxAndMinSeq", m.SendID, m.ReqIdentifier, m.MsgIncr, data.(sdk_ws.GetMaxAndMinSeqReq).GroupIDList)
+		grpcConn := getcdv3.GetDefaultConn(config.Config.Etcd.EtcdSchema, strings.Join(config.Config.Etcd.EtcdAddr, ","), config.Config.RpcRegisterName.OpenImMsgName, rpcReq.OperationID)
+		if grpcConn == nil {
+			errMsg := rpcReq.OperationID + "getcdv3.GetDefaultConn == nil"
+			nReply.ErrCode = 500
+			nReply.ErrMsg = errMsg
+			log.NewError(rpcReq.OperationID, errMsg)
+			ws.getSeqResp(conn, m, nReply)
+			return
+		}
+		msgClient := pbChat.NewMsgClient(grpcConn)
+		rpcReply, err := msgClient.GetMaxAndMinSeq(context.Background(), &rpcReq)
+		if err != nil {
+			nReply.ErrCode = 500
+			nReply.ErrMsg = err.Error()
+			log.Error(rpcReq.OperationID, "rpc call failed to GetMaxAndMinSeq ", nReply.String())
+			ws.getSeqResp(conn, m, nReply)
+		} else {
+			log.NewInfo(rpcReq.OperationID, "rpc call success to getSeqReq", rpcReply.String())
+			ws.getSeqResp(conn, m, rpcReply)
+		}
+	} else {
+		nReply.ErrCode = errCode
+		nReply.ErrMsg = errMsg
+		log.Error(m.OperationID, "argsValidate failed send resp: ", nReply.String())
+		ws.getSeqResp(conn, m, nReply)
+	}
+}
+
+// getSeqResp - 获取最大序号req答复
+func (ws *WServer) getSeqResp(conn *UserConn, m *Req, pb *sdk_ws.GetMaxAndMinSeqResp) {
+
 }
 
 // sendMsgReq - 发送消息请求

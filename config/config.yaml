@@ -63,6 +63,7 @@ cmsapi:
 
 rpcport: #rpc服务端口 默认即可
   openImUserPort: [ 10110 ] # rpc 用户信息端口
+  openImFriendPort: [ 10120 ] # rpc 好友信息端口
   openImMessagePort: [ 10130 ] # rpc im消息端口
   openImMessageGatewayPort: [ 10140 ] # rpc 消息网关端口
   openImPushPort: [ 10170 ] # rpc 推送端口

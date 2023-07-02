@@ -76,6 +76,11 @@ func (och *OnlineHistoryRedisConsumerHandler) Run(channelID int) {
 				}
 				log.Debug(triggerID, "msg storage length", len(storageMsgList), "push length", len(notStoragePushMsgList))
 				if len(storageMsgList) > 0 {
+					// 设置聊天消息的缓存，包括最大的req
+					err, _ := saveUserChatList(msgChannelValue.aggregationID, storageMsgList, triggerID)
+					if err != nil {
+
+					}
 					for _, v := range storageMsgList {
 						sendMessageToPushMQ(v, msgChannelValue.aggregationID)
 					}
@@ -108,7 +113,6 @@ func (och *OnlineHistoryRedisConsumerHandler) MessagesDistributionHandle() {
 						return
 					}
 					log.Debug(triggerID, "single msg come to distribution center", msgFromMQ.String(), string(consumerMessages[i].Key))
-					// todo hank why
 					// 根据sendid或receiveid汇总消息
 					if oldM, ok := aggregationMsgs[string(consumerMessages[i].Key)]; ok {
 						oldM = append(oldM, &msgFromMQ)

@@ -47,7 +47,9 @@ func main() {
 	//friend routing group
 	friendRouterGroup := r.Group("/friend")
 	{
-		friendRouterGroup.POST("/add_friend", friend.AddFriend) // 添加好友
+		friendRouterGroup.POST("/add_friend", friend.AddFriend)                              // 添加好友
+		friendRouterGroup.POST("/get_friend_apply_list", friend.GetFriendApplyList)          // 获取好友申请列表
+		friendRouterGroup.POST("/get_self_friend_apply_list", friend.GetSelfFriendApplyList) // 获取我申请的好友列表
 	}
 	//certificate 授权验证
 	authRouterGroup := r.Group("/auth")

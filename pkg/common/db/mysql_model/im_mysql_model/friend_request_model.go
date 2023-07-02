@@ -6,6 +6,26 @@ import (
 	"time"
 )
 
+// who apply to add me 谁想要申请加我
+func GetReceivedFriendsApplicationListByUserID(ToUserID string) ([]db.FriendRequest, error) {
+	var usersInfo []db.FriendRequest
+	err := db.DB.MysqlDB.DefaultGormDB().Table("friend_requests").Where("to_user_id=?", ToUserID).Find(&usersInfo).Error
+	if err != nil {
+		return nil, err
+	}
+	return usersInfo, nil
+}
+
+// I apply to add somebody 我申请好友的列表
+func GetSendFriendApplicationListByUserID(FromUserID string) ([]db.FriendRequest, error) {
+	var usersInfo []db.FriendRequest
+	err := db.DB.MysqlDB.DefaultGormDB().Table("friend_requests").Where("from_user_id=?", FromUserID).Find(&usersInfo).Error
+	if err != nil {
+		return nil, err
+	}
+	return usersInfo, nil
+}
+
 // InsertFriendApplication - 添加好友信息请求
 func InsertFriendApplication(friendRequest *db.FriendRequest, args map[string]interface{}) error {
 	// todo hank 这里没看懂为啥这么写

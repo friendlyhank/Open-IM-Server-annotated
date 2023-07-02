@@ -2,14 +2,17 @@ package constant
 
 const (
 	//Websocket Protocol  socket协议
+	WSGetNewestSeq  = 1001 // 获取最新的seq序号
 	WSSendMsg       = 1003 // 发送消息
 	WSPushMsg       = 2001 // 推送消息
 	WSKickOnlineMsg = 2002 // 踢出消息
 	WsLogoutMsg     = 2003 // 登出消息
 
 	//SessionType
-	SingleChatType = 1 // 单聊消息
-	GroupChatType  = 2 // 群聊消息
+	SingleChatType       = 1 // 单聊消息
+	GroupChatType        = 2 // 群聊消息
+	SuperGroupChatType   = 3 // 超级群聊消息
+	NotificationChatType = 4 // 通知类型聊天信息
 	//token 用户token相关
 	NormalToken  = 0 // 普通token
 	InValidToken = 1 // 无效token

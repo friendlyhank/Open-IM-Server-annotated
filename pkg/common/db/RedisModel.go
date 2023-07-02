@@ -12,8 +12,42 @@ import (
  */
 
 const (
+	userIncrSeq = "REDIS_USER_INCR_SEQ:"  // user incr seq req递增
+	userMinSeq  = "REDIS_USER_MIN_SEQ:"   // 获取最小的req
 	uidPidToken = "UID_PID_TOKEN_STATUS:" // 用户token 设置
+	groupMaxSeq = "GROUP_MAX_SEQ:"        // 获取群聊最大的req
 )
+
+// Get the largest Seq 根据用户获取最大的req序号
+func (d *DataBases) GetUserMaxSeq(uid string) (uint64, error) {
+	key := userIncrSeq + uid
+	seq, err := d.RDB.Get(context.Background(), key).Result()
+	return uint64(utils.StringToInt(seq)), err
+}
+
+// set the largest Seq 设置用户最大的req序号
+func (d *DataBases) SetUserMaxSeq(uid string, maxSeq uint64) error {
+	key := userIncrSeq + uid
+	return d.RDB.Set(context.Background(), key, maxSeq, 0).Err()
+}
+
+// Get the smallest Seq 根据用户获取最小的req序号
+func (d *DataBases) GetUserMinSeq(uid string) (uint64, error) {
+	key := userMinSeq + uid
+	seq, err := d.RDB.Get(context.Background(), key).Result()
+	return uint64(utils.StringToInt(seq)), err
+}
+
+func (d *DataBases) GetGroupMaxSeq(groupID string) (uint64, error) {
+	key := groupMaxSeq + groupID
+	seq, err := d.RDB.Get(context.Background(), key).Result()
+	return uint64(utils.StringToInt(seq)), err
+}
+
+func (d *DataBases) SetGroupMaxSeq(groupID string, maxSeq uint64) error {
+	key := groupMaxSeq + groupID
+	return d.RDB.Set(context.Background(), key, maxSeq, 0).Err()
+}
 
 // Store userid and platform class to redis - 设置token
 func (d *DataBases) AddTokenFlag(userID string, platformID int, token string, flag int) error {

@@ -8,8 +8,10 @@ import (
 	rocksCache "Open_IM/pkg/common/db/rocks_cache"
 	"Open_IM/pkg/common/log"
 	"Open_IM/pkg/common/token_verify"
+	cp "Open_IM/pkg/common/utils"
 	"Open_IM/pkg/grpc-etcdv3/getcdv3"
 	pbFriend "Open_IM/pkg/proto/friend"
+	sdkws "Open_IM/pkg/proto/sdk_ws"
 	"Open_IM/pkg/utils"
 	"context"
 	"google.golang.org/grpc"
@@ -197,10 +199,87 @@ func (s *friendServer) GetFriendList(ctx context.Context, req *pbFriend.GetFrien
 	return nil, nil
 }
 
+// GetFriendApplyList - 好友申请列表
 func (s *friendServer) GetFriendApplyList(ctx context.Context, req *pbFriend.GetFriendApplyListReq) (*pbFriend.GetFriendApplyListResp, error) {
-	return nil, nil
+	log.NewInfo(req.CommID.OperationID, "GetFriendApplyList args ", req.String())
+	//Parse token, to find current user information
+	if !token_verify.CheckAccess(req.CommID.OpUserID, req.CommID.FromUserID) {
+		log.NewError(req.CommID.OperationID, "CheckAccess false ", req.CommID.OpUserID, req.CommID.FromUserID)
+		return &pbFriend.GetFriendApplyListResp{ErrCode: constant.ErrAccess.ErrCode, ErrMsg: constant.ErrAccess.ErrMsg}, nil
+	}
+	//	Find the  current user friend applications received 查找好友的申请列表
+	ApplyUsersInfo, err := imdb.GetReceivedFriendsApplicationListByUserID(req.CommID.FromUserID)
+	if err != nil {
+		log.NewError(req.CommID.OperationID, "GetReceivedFriendsApplicationListByUserID ", err.Error(), req.CommID.FromUserID)
+		return &pbFriend.GetFriendApplyListResp{ErrCode: constant.ErrDB.ErrCode, ErrMsg: constant.ErrDB.ErrMsg}, nil
+	}
+	var appleUserList []*sdkws.FriendRequest
+	for _, applyUserInfo := range ApplyUsersInfo {
+		var userInfo sdkws.FriendRequest
+		cp.FriendRequestDBCopyOpenIM(&userInfo, &applyUserInfo)
+		//	utils.CopyStructFields(&userInfo, applyUserInfo)
+		//	u, err := imdb.GetUserByUserID(userInfo.FromUserID)
+		//	if err != nil {
+		//		log.Error(req.CommID.OperationID, "GetUserByUserID", userInfo.FromUserID)
+		//		continue
+		//	}
+		//	userInfo.FromNickname = u.Nickname
+		//	userInfo.FromFaceURL = u.FaceURL
+		//	userInfo.FromGender = u.Gender
+		//
+		//	u, err = imdb.GetUserByUserID(userInfo.ToUserID)
+		//	if err != nil {
+		//		log.Error(req.CommID.OperationID, "GetUserByUserID", userInfo.ToUserID)
+		//		continue
+		//	}
+		//	userInfo.ToNickname = u.Nickname
+		//	userInfo.ToFaceURL = u.FaceURL
+		//	userInfo.ToGender = u.Gender
+		appleUserList = append(appleUserList, &userInfo)
+	}
+
+	log.NewInfo(req.CommID.OperationID, "rpc GetFriendApplyList ok", pbFriend.GetFriendApplyListResp{FriendRequestList: appleUserList})
+	return &pbFriend.GetFriendApplyListResp{FriendRequestList: appleUserList}, nil
 }
 
 func (s *friendServer) GetSelfApplyList(ctx context.Context, req *pbFriend.GetSelfApplyListReq) (*pbFriend.GetSelfApplyListResp, error) {
-	return nil, nil
+	log.NewInfo(req.CommID.OperationID, "GetSelfApplyList args ", req.String())
+
+	//Parse token, to find current user information
+	if !token_verify.CheckAccess(req.CommID.OpUserID, req.CommID.FromUserID) {
+		log.NewError(req.CommID.OperationID, "CheckAccess false ", req.CommID.OpUserID, req.CommID.FromUserID)
+		return &pbFriend.GetSelfApplyListResp{ErrCode: constant.ErrAccess.ErrCode, ErrMsg: constant.ErrAccess.ErrMsg}, nil
+	}
+	//	Find the self add other userinfo
+	usersInfo, err := imdb.GetSendFriendApplicationListByUserID(req.CommID.FromUserID)
+	if err != nil {
+		log.NewError(req.CommID.OperationID, "GetSendFriendApplicationListByUserID failed ", err.Error(), req.CommID.FromUserID)
+		return &pbFriend.GetSelfApplyListResp{ErrCode: constant.ErrDB.ErrCode, ErrMsg: constant.ErrDB.ErrMsg}, nil
+	}
+	var selfApplyOtherUserList []*sdkws.FriendRequest
+	for _, selfApplyOtherUserInfo := range usersInfo {
+		var userInfo sdkws.FriendRequest // pbFriend.ApplyUserInfo
+		cp.FriendRequestDBCopyOpenIM(&userInfo, &selfApplyOtherUserInfo)
+		//u, err := imdb.GetUserByUserID(userInfo.FromUserID)
+		//if err != nil {
+		//	log.Error(req.CommID.OperationID, "GetUserByUserID", userInfo.FromUserID)
+		//	continue
+		//}
+		//userInfo.FromNickname = u.Nickname
+		//userInfo.FromFaceURL = u.FaceURL
+		//userInfo.FromGender = u.Gender
+		//
+		//u, err = imdb.GetUserByUserID(userInfo.ToUserID)
+		//if err != nil {
+		//	log.Error(req.CommID.OperationID, "GetUserByUserID", userInfo.ToUserID)
+		//	continue
+		//}
+		//userInfo.ToNickname = u.Nickname
+		//userInfo.ToFaceURL = u.FaceURL
+		//userInfo.ToGender = u.Gender
+
+		selfApplyOtherUserList = append(selfApplyOtherUserList, &userInfo)
+	}
+	log.NewInfo(req.CommID.OperationID, "rpc GetSelfApplyList ok", pbFriend.GetSelfApplyListResp{FriendRequestList: selfApplyOtherUserList})
+	return &pbFriend.GetSelfApplyListResp{FriendRequestList: selfApplyOtherUserList}, nil
 }
