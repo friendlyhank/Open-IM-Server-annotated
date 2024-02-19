@@ -1,0 +1,68 @@
+# Copyright © 2023 OpenIM. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the License);
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# -----------------------------------------------------------------
+# TODO: This config file is the template file
+# --| source: deployments/templates/openim.yaml
+# --| env: scripts/install/environment
+# --| target: config/config.yaml
+# -----------------------------------------------------------------
+
+###################### Zookeeper ######################
+# Zookeeper configuration
+# It's not recommended to modify the schema
+#
+# Zookeeper address
+# Zookeeper username
+# Zookeeper password
+zookeeper:
+  schema: openim
+  address: [ 127.0.0.1:2181 ]
+  username: ''
+  password: ''
+
+###################### Redis configuration information ######################
+# Redis configuration
+#
+# Username is required only for Redis version 6.0+
+redis:
+  address: [ 127.0.0.1:6379 ]
+  username: ''
+  password: 123456
+
+###################### API configuration information ######################
+# API configuration
+#
+# API service port
+# Default listen IP is 0.0.0.0
+# openImApi的ip和port配置
+api:
+  openImApiPort: [ 10002 ]
+  listenIP: 0.0.0.0
+
+###################### Log Configuration ######################
+# Log configuration
+#
+# Storage directory
+# Log rotation time
+# Maximum number of logs to retain
+# Log level, 6 means all levels
+# Whether to output to stdout
+# Whether to output in json format
+# Whether to include stack trace in logs
+log:
+  storageLocation: /data/workspaces/open-im-server/logs/  # 日志存储路径
+  remainLogLevel: 4
+  isStdout: true # 是否控制台打印
+  withStack: false # 是否包含堆栈
