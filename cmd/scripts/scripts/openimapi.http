@@ -1,10 +1,28 @@
 
-###
-POST {{openim-api}}/group/create_group HTTP/1.1
+
+## 用户管理
+
+### 导入注册用户
+POST {{openim-api}}/user/user_register HTTP/1.1
 Content-Type: application/json
 operationID: 1646445464564
-token:1111
 
 {
-
+  "secret": "openIM123",
+  "users": [
+    {
+      "userID": "11111112",
+      "nickname": "hank",
+      "faceURL": "yourFaceURL"
+    }
+  ]
 }
+
+###  群管理
+
+### 导入注册用户
+POST {{openim-api}}/user/user_register HTTP/1.1
+Content-Type: application/json
+
+
+
