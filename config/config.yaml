@@ -66,3 +66,11 @@ log:
   remainLogLevel: 4
   isStdout: true # 是否控制台打印
   withStack: false # 是否包含堆栈
+
+###################### Prometheus ######################
+# Prometheus configuration for various services
+# The number of Prometheus ports per service needs to correspond to rpcPort
+# The number of ports needs to be consistent with msg_transfer_service_num in script/path_info.sh
+prometheus:
+  enable: false  # 开关
+  apiPrometheusPort: [20100] # api的prometheus端口

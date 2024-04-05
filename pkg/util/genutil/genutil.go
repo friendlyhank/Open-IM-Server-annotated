@@ -1,6 +1,7 @@
 package genutil
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -25,4 +26,10 @@ func OutDir(path string) (string, error) {
 	}
 	outDir += "/"
 	return outDir, nil
+}
+
+func ExitWithError(err error) {
+	progName := filepath.Base(os.Args[0])
+	fmt.Fprintf(os.Stderr, "%s exit -1: %+v\n", progName, err)
+	os.Exit(-1)
 }
