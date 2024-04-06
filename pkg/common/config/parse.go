@@ -1,6 +1,7 @@
 package config
 
 import (
+	_ "embed"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,6 +9,9 @@ import (
 	"github.com/friendlyhank/open-im-server-annotated/v3/pkg/util/genutil"
 	"gopkg.in/yaml.v3"
 )
+
+//go:embed version
+var Version string
 
 const (
 	FileName             = "config.yaml"       // 配置

@@ -15,10 +15,26 @@ type GlobalConfig struct {
 		Username string   `yaml:"username"`
 		Password string   `yaml:"password"`
 	} `yaml:"zookeeper"`
+	Rpc struct { // rpc配置
+		RegisterIP string `yaml:"registerIP"`
+		ListenIP   string `yaml:"listenIP"`
+	} `yaml:"rpc"`
 	Api struct { // api端口和ip
 		OpenImApiPort []int  `yaml:"openImApiPort"`
 		ListenIP      string `yaml:"listenIP"`
 	} `yaml:"api"`
+	RpcPort struct { //rpc端口
+		OpenImUserPort           []int `yaml:"openImUserPort"`
+		OpenImFriendPort         []int `yaml:"openImFriendPort"`
+		OpenImMessagePort        []int `yaml:"openImMessagePort"`
+		OpenImMessageGatewayPort []int `yaml:"openImMessageGatewayPort"`
+		OpenImGroupPort          []int `yaml:"openImGroupPort"`
+		OpenImAuthPort           []int `yaml:"openImAuthPort"`
+		OpenImPushPort           []int `yaml:"openImPushPort"`
+		OpenImConversationPort   []int `yaml:"openImConversationPort"`
+		OpenImRtcPort            []int `yaml:"openImRtcPort"`
+		OpenImThirdPort          []int `yaml:"openImThirdPort"`
+	} `yaml:"rpcPort"`
 	RpcRegisterName struct { // rpc注册服务
 		OpenImUserName           string `yaml:"openImUserName"`
 		OpenImFriendName         string `yaml:"openImFriendName"`
@@ -40,8 +56,20 @@ type GlobalConfig struct {
 		WithStack           bool   `yaml:"withStack"`
 	} `yaml:"log"`
 	Prometheus struct {
-		Enable            bool  `yaml:"enable"`
-		ApiPrometheusPort []int `yaml:"apiPrometheusPort"`
+		Enable                        bool   `yaml:"enable"`
+		GrafanaUrl                    string `yaml:"grafanaUrl"` // grafana地址
+		ApiPrometheusPort             []int  `yaml:"apiPrometheusPort"`
+		UserPrometheusPort            []int  `yaml:"userPrometheusPort"`
+		FriendPrometheusPort          []int  `yaml:"friendPrometheusPort"`
+		MessagePrometheusPort         []int  `yaml:"messagePrometheusPort"`
+		MessageGatewayPrometheusPort  []int  `yaml:"messageGatewayPrometheusPort"`
+		GroupPrometheusPort           []int  `yaml:"groupPrometheusPort"`
+		AuthPrometheusPort            []int  `yaml:"authPrometheusPort"`
+		PushPrometheusPort            []int  `yaml:"pushPrometheusPort"`
+		ConversationPrometheusPort    []int  `yaml:"conversationPrometheusPort"`
+		RtcPrometheusPort             []int  `yaml:"rtcPrometheusPort"`
+		MessageTransferPrometheusPort []int  `yaml:"messageTransferPrometheusPort"`
+		ThirdPrometheusPort           []int  `yaml:"thirdPrometheusPort"`
 	} `yaml:"prometheus"`
 	Notification notification `yaml:"notification"` // 通知相关配置
 }
