@@ -33,3 +33,8 @@ func ExitWithError(err error) {
 	fmt.Fprintf(os.Stderr, "%s exit -1: %+v\n", progName, err)
 	os.Exit(-1)
 }
+
+func SIGTERMExit() {
+	progName := filepath.Base(os.Args[0])
+	fmt.Fprintf(os.Stderr, "Warning %s receive process terminal SIGTERM exit 0\n", progName)
+}
