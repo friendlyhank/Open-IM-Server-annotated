@@ -55,6 +55,16 @@ type GlobalConfig struct {
 		IsJson              bool   `yaml:"isJson"`
 		WithStack           bool   `yaml:"withStack"`
 	} `yaml:"log"`
+	Manager struct { // 管理员配置
+		UserID   []string `yaml:"userID"`
+		Nickname []string `yaml:"nickname"`
+	} `yaml:"manager"`
+
+	IMAdmin struct {
+		UserID   []string `yaml:"userID"`
+		Nickname []string `yaml:"nickname"`
+	} `yaml:"im-admin"`
+
 	Prometheus struct {
 		Enable                        bool   `yaml:"enable"`
 		GrafanaUrl                    string `yaml:"grafanaUrl"` // grafana地址

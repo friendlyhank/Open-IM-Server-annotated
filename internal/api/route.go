@@ -11,6 +11,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/friendlyhank/open-im-server-annotated/v3/pkg/rpcclient"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -100,6 +102,11 @@ func newGinRouter(disCov discoveryregistry.SvcDiscoveryRegistry, config *config.
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.Use(gin.Recovery(), mw.CorsHandler(), mw.GinParseOperationID())
+	// 初始化rpc客户端
+	userRpc := rpcclient.NewUser(disCov, config)
+	fmt.Println(userRpc)
+	// todo hank
+
 	//userRouterGroup := r.Group("/user")
 	//{
 	//	userRouterGroup.POST("/user_register", u.UserRegister)

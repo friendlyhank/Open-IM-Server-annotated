@@ -107,6 +107,14 @@ log:
   isStdout: true # 是否控制台打印
   withStack: false # 是否包含堆栈
 
+# App manager configuration
+#
+# Built-in app manager user IDs
+# Built-in app manager nicknames
+manager:
+  userID: [ "openIM123456", "openIM654321", "openIMAdmin" ]
+  nickname: [ "system1", "system2", "system3" ]
+
 ###################### Prometheus ######################
 # Prometheus configuration for various services
 # The number of Prometheus ports per service needs to correspond to rpcPort
