@@ -4,6 +4,15 @@ package config
  * 全局配置解析
  */
 
+type MYSQL struct {
+	Address     []string `yaml:"address"`
+	Username    string   `yaml:"username"`
+	Password    string   `yaml:"password"`
+	Database    string   `yaml:"database"`
+	MaxOpenConn int      `yaml:"maxOpenConn"`
+	MaxIdleConn int      `yaml:"maxIdleConn"`
+}
+
 // GlobalConfig - 全局配置
 type GlobalConfig struct {
 	Envs struct { // 服务发现组件
@@ -15,6 +24,25 @@ type GlobalConfig struct {
 		Username string   `yaml:"username"`
 		Password string   `yaml:"password"`
 	} `yaml:"zookeeper"`
+
+	Mysql *MYSQL `yaml:"mysql"`
+
+	Mongo struct {
+		Uri         string   `yaml:"uri"`
+		Address     []string `yaml:"address"`
+		Database    string   `yaml:"database"`
+		Username    string   `yaml:"username"`
+		Password    string   `yaml:"password"`
+		MaxPoolSize int      `yaml:"maxPoolSize"`
+	} `yaml:"mongo"`
+
+	Redis struct {
+		ClusterMode    bool     `yaml:"clusterMode"` // 是否集群模式
+		Address        []string `yaml:"address"`
+		Username       string   `yaml:"username"`
+		Password       string   `yaml:"password"`
+		EnablePipeline bool     `yaml:"enablePipeline"` // 是否允许pipeline管道
+	} `yaml:"redis"`
 	Rpc struct { // rpc配置
 		RegisterIP string `yaml:"registerIP"`
 		ListenIP   string `yaml:"listenIP"`
@@ -65,6 +93,7 @@ type GlobalConfig struct {
 		Nickname []string `yaml:"nickname"`
 	} `yaml:"im-admin"`
 
+	Secret     string `yaml:"secret"`
 	Prometheus struct {
 		Enable                        bool   `yaml:"enable"`
 		GrafanaUrl                    string `yaml:"grafanaUrl"` // grafana地址

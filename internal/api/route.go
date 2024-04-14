@@ -104,13 +104,12 @@ func newGinRouter(disCov discoveryregistry.SvcDiscoveryRegistry, config *config.
 	r.Use(gin.Recovery(), mw.CorsHandler(), mw.GinParseOperationID())
 	// 初始化rpc客户端
 	userRpc := rpcclient.NewUser(disCov, config)
-	fmt.Println(userRpc)
-	// todo hank
+	u := NewUserApi(*userRpc)
 
-	//userRouterGroup := r.Group("/user")
-	//{
-	//	userRouterGroup.POST("/user_register", u.UserRegister)
-	//}
+	userRouterGroup := r.Group("/user")
+	{
+		userRouterGroup.POST("/user_register", u.UserRegister)
+	}
 
 	return r
 }

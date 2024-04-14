@@ -2,20 +2,56 @@ package user
 
 import (
 	"context"
+	"fmt"
+	"strings"
+
+	"github.com/OpenIMSDK/protocol/constant"
+
+	"github.com/friendlyhank/open-im-server-annotated/v3/pkg/common/db/unrelation"
+
+	"github.com/friendlyhank/open-im-server-annotated/v3/pkg/common/db/cache"
+
+	"github.com/friendlyhank/open-im-server-annotated/v3/pkg/common/db/controller"
+
+	"github.com/OpenIMSDK/protocol/sdkws"
+	"github.com/OpenIMSDK/tools/utils"
+
+	"github.com/OpenIMSDK/tools/errs"
+	"github.com/OpenIMSDK/tools/log"
 
 	pbuser "github.com/OpenIMSDK/protocol/user"
 	registry "github.com/OpenIMSDK/tools/discoveryregistry"
 	"github.com/friendlyhank/open-im-server-annotated/v3/pkg/common/config"
+	tablerelation "github.com/friendlyhank/open-im-server-annotated/v3/pkg/common/db/table/relation"
 	"google.golang.org/grpc"
 )
 
 // userServer - 用户服务
 type userServer struct {
+	controller.UserDatabase
+	config *config.GlobalConfig // 配置信息
 }
 
 // Start - 启动程序
 func Start(config *config.GlobalConfig, client registry.SvcDiscoveryRegistry, server *grpc.Server) error {
-	u := &userServer{}
+	rdb, err := cache.NewRedis(config)
+	if err != nil {
+		return err
+	}
+	mongo, err := unrelation.NewMongo(config)
+	if err != nil {
+		return err
+	}
+	users := make([]*tablerelation.UserModel, 0)
+	if len(config.IMAdmin.UserID) != len(config.IMAdmin.Nickname) {
+		return errs.Wrap(fmt.Errorf("the count of ImAdmin.UserID is not equal to the count of ImAdmin.Nickname"))
+	}
+	for k, v := range config.IMAdmin.UserID {
+		users = append(users, &tablerelation.UserModel{UserID: v, Nickname: config.IMAdmin.Nickname[k], AppMangerLevel: constant.AppNotificationAdmin})
+	}
+	u := &userServer{
+		config: config,
+	}
 	pbuser.RegisterUserServer(server, u)
 	return nil
 }
@@ -55,9 +91,29 @@ func (u userServer) GetPaginationUsers(ctx context.Context, req *pbuser.GetPagin
 	panic("implement me")
 }
 
-func (u userServer) UserRegister(ctx context.Context, req *pbuser.UserRegisterReq) (*pbuser.UserRegisterResp, error) {
-	//TODO implement me
-	panic("implement me")
+// UserRegister - 用户注册接口
+func (s userServer) UserRegister(ctx context.Context, req *pbuser.UserRegisterReq) (resp *pbuser.UserRegisterResp, err error) {
+	resp = &pbuser.UserRegisterResp{}
+	if len(req.Users) == 0 {
+		return nil, errs.ErrArgs.Wrap("users is empty")
+	}
+	if req.Secret != s.config.Secret {
+		log.ZDebug(ctx, "UserRegister", s.config.Secret, req.Secret)
+		return nil, errs.ErrNoPermission.Wrap("secret invalid")
+	}
+	if utils.DuplicateAny(req.Users, func(e *sdkws.UserInfo) string { return e.UserID }) {
+		return nil, errs.ErrArgs.Wrap("userID repeated")
+	}
+	userIDs := make([]string, 0)
+	for _, user := range req.Users {
+		if user.UserID == "" {
+			return nil, errs.ErrArgs.Wrap("userID is empty")
+		}
+		if strings.Contains(user.UserID, ":") {
+			return nil, errs.ErrArgs.Wrap("userID contains ':' is invalid userID")
+		}
+		userIDs = append(userIDs, user.UserID)
+	}
 }
 
 func (u userServer) GetAllUserID(ctx context.Context, req *pbuser.GetAllUserIDReq) (*pbuser.GetAllUserIDResp, error) {
