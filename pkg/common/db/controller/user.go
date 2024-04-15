@@ -6,6 +6,7 @@ import (
 
 	"github.com/OpenIMSDK/protocol/user"
 	"github.com/OpenIMSDK/tools/pagination"
+	"github.com/friendlyhank/open-im-server-annotated/v3/pkg/common/db/table/relation"
 )
 
 type UserDatabase interface {
@@ -64,4 +65,138 @@ type UserDatabase interface {
 
 // userDatabase -用户数据库
 type userDatabase struct {
+}
+
+func (u userDatabase) FindWithError(ctx context.Context, userIDs []string) (users []*relation.UserModel, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) Find(ctx context.Context, userIDs []string) (users []*relation.UserModel, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) FindByNickname(ctx context.Context, nickname string) (users []*relation.UserModel, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) FindNotification(ctx context.Context, level int64) (users []*relation.UserModel, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) Create(ctx context.Context, users []*relation.UserModel) (err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) UpdateByMap(ctx context.Context, userID string, args map[string]any) (err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) PageFindUser(ctx context.Context, level1 int64, level2 int64, pagination pagination.Pagination) (count int64, users []*relation.UserModel, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) PageFindUserWithKeyword(ctx context.Context, level1 int64, level2 int64, userID string, nickName string, pagination pagination.Pagination) (count int64, users []*relation.UserModel, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) Page(ctx context.Context, pagination pagination.Pagination) (count int64, users []*relation.UserModel, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) IsExist(ctx context.Context, userIDs []string) (exist bool, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) GetAllUserID(ctx context.Context, pagination pagination.Pagination) (int64, []string, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) GetUserByID(ctx context.Context, userID string) (user *relation.UserModel, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) InitOnce(ctx context.Context, users []*relation.UserModel) (err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) CountTotal(ctx context.Context, before *time.Time) (int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) CountRangeEverydayTotal(ctx context.Context, start time.Time, end time.Time) (map[string]int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) SubscribeUsersStatus(ctx context.Context, userID string, userIDs []string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) UnsubscribeUsersStatus(ctx context.Context, userID string, userIDs []string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) GetAllSubscribeList(ctx context.Context, userID string) ([]string, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) GetSubscribedList(ctx context.Context, userID string) ([]string, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) GetUserStatus(ctx context.Context, userIDs []string) ([]*user.OnlineStatus, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) SetUserStatus(ctx context.Context, userID string, status, platformID int32) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) AddUserCommand(ctx context.Context, userID string, Type int32, UUID string, value string, ex string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) DeleteUserCommand(ctx context.Context, userID string, Type int32, UUID string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) UpdateUserCommand(ctx context.Context, userID string, Type int32, UUID string, val map[string]any) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) GetUserCommands(ctx context.Context, userID string, Type int32) ([]*user.CommandInfoResp, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u userDatabase) GetAllUserCommands(ctx context.Context, userID string) ([]*user.AllCommandInfoResp, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func NewUserDatabase() UserDatabase {
+	return &userDatabase{}
 }
