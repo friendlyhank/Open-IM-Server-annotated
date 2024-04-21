@@ -4,6 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/OpenIMSDK/tools/tx"
+
+	"github.com/friendlyhank/open-im-server-annotated/v3/pkg/common/db/cache"
+
 	"github.com/OpenIMSDK/protocol/user"
 	"github.com/OpenIMSDK/tools/pagination"
 	"github.com/friendlyhank/open-im-server-annotated/v3/pkg/common/db/table/relation"
@@ -65,6 +69,13 @@ type UserDatabase interface {
 
 // userDatabase -用户数据库
 type userDatabase struct {
+	tx     tx.CtxTx
+	userDB relation.UserModelInterface
+	cache  cache.UserCache
+}
+
+func NewUserDatabase(userDB relation.UserModelInterface, tx tx.CtxTx) UserDatabase {
+	return &userDatabase{userDB: userDB, tx: tx}
 }
 
 func (u userDatabase) FindWithError(ctx context.Context, userIDs []string) (users []*relation.UserModel, err error) {
@@ -88,8 +99,12 @@ func (u userDatabase) FindNotification(ctx context.Context, level int64) (users 
 }
 
 func (u userDatabase) Create(ctx context.Context, users []*relation.UserModel) (err error) {
-	//TODO implement me
-	panic("implement me")
+	return u.tx.Transaction(ctx, func(ctx context.Context) error {
+		if err = u.userDB.Create(ctx, users); err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 func (u userDatabase) UpdateByMap(ctx context.Context, userID string, args map[string]any) (err error) {
@@ -113,8 +128,14 @@ func (u userDatabase) Page(ctx context.Context, pagination pagination.Pagination
 }
 
 func (u userDatabase) IsExist(ctx context.Context, userIDs []string) (exist bool, err error) {
-	//TODO implement me
-	panic("implement me")
+	users, err := u.userDB.Find(ctx, userIDs)
+	if err != nil {
+		return false, err
+	}
+	if len(users) > 0 {
+		return true, nil
+	}
+	return false, nil
 }
 
 func (u userDatabase) GetAllUserID(ctx context.Context, pagination pagination.Pagination) (int64, []string, error) {
@@ -195,8 +216,4 @@ func (u userDatabase) GetUserCommands(ctx context.Context, userID string, Type i
 func (u userDatabase) GetAllUserCommands(ctx context.Context, userID string) ([]*user.AllCommandInfoResp, error) {
 	//TODO implement me
 	panic("implement me")
-}
-
-func NewUserDatabase() UserDatabase {
-	return &userDatabase{}
 }

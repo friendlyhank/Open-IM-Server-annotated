@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
-	"github.com/OpenIMSDK/protocol/constant"
+	"github.com/OpenIMSDK/tools/tx"
+
+	"github.com/friendlyhank/open-im-server-annotated/v3/pkg/common/db/mgo"
 
 	"github.com/friendlyhank/open-im-server-annotated/v3/pkg/common/db/unrelation"
 
@@ -34,7 +37,7 @@ type userServer struct {
 
 // Start - 启动程序
 func Start(config *config.GlobalConfig, client registry.SvcDiscoveryRegistry, server *grpc.Server) error {
-	rdb, err := cache.NewRedis(config)
+	_, err := cache.NewRedis(config)
 	if err != nil {
 		return err
 	}
@@ -47,10 +50,16 @@ func Start(config *config.GlobalConfig, client registry.SvcDiscoveryRegistry, se
 		return errs.Wrap(fmt.Errorf("the count of ImAdmin.UserID is not equal to the count of ImAdmin.Nickname"))
 	}
 	for k, v := range config.IMAdmin.UserID {
-		users = append(users, &tablerelation.UserModel{UserID: v, Nickname: config.IMAdmin.Nickname[k], AppMangerLevel: constant.AppNotificationAdmin})
+		users = append(users, &tablerelation.UserModel{UserID: v, Nickname: config.IMAdmin.Nickname[k]})
 	}
+	userDB, err := mgo.NewUserMongo(mongo.GetDatabase(config.Mongo.Database))
+	if err != nil {
+		return err
+	}
+	database := controller.NewUserDatabase(userDB, tx.NewMongo(mongo.GetClient()))
 	u := &userServer{
-		config: config,
+		UserDatabase: database,
+		config:       config,
 	}
 	pbuser.RegisterUserServer(server, u)
 	return nil
@@ -114,6 +123,27 @@ func (s userServer) UserRegister(ctx context.Context, req *pbuser.UserRegisterRe
 		}
 		userIDs = append(userIDs, user.UserID)
 	}
+	exist, err := s.IsExist(ctx, userIDs)
+	if err != nil {
+		return nil, err
+	}
+	if exist {
+		return nil, errs.ErrRegisteredAlready.Wrap("userID registered already")
+	}
+	now := time.Now()
+	users := make([]*tablerelation.UserModel, 0, len(req.Users))
+	for _, user := range req.Users {
+		users = append(users, &tablerelation.UserModel{
+			UserID:     user.UserID,
+			Nickname:   user.Nickname,
+			FaceURL:    user.FaceURL,
+			CreateTime: now,
+		})
+	}
+	if err := s.Create(ctx, users); err != nil {
+		return nil, err
+	}
+	return resp, nil
 }
 
 func (u userServer) GetAllUserID(ctx context.Context, req *pbuser.GetAllUserIDReq) (*pbuser.GetAllUserIDResp, error) {

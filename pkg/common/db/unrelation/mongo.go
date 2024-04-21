@@ -100,3 +100,13 @@ func shouldRetry(err error) bool {
 	}
 	return true
 }
+
+// GetClient returns the MongoDB client.
+func (m *Mongo) GetClient() *mongo.Client {
+	return m.db
+}
+
+// GetDatabase returns the specific database from MongoDB.
+func (m *Mongo) GetDatabase(database string) *mongo.Database {
+	return m.db.Database(database)
+}

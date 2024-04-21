@@ -17,17 +17,17 @@ mongod --dbpath /usr/local/mongodb/data --logpath /usr/local/mongodb/log/mongo.l
 cd ~/go/src/github.com/OpenIMSDK/Open-IM-Server/cmd/
 
 # 先杀死进程
-killall openimapi
-killall openimrpcuser
+#killall openimapi
+#killall openimrpcuser
 
 # 构建服务
 # 启动api服务
-go build -o openimapi openim-api/main.go
-# 构建rpc服务
-go build -o openimrpcuser ./openim-rpc/openim-rpc-user/main.go
-
-#后台构建运行服务
-nohup ./openimapi &
-nohup ./openimrpcuser &
+#go build -o openimapi openim-api/main.go
+## 构建rpc服务
+#go build -o openimrpcuser ./openim-rpc/openim-rpc-user/main.go
+#
+##后台构建运行服务
+#nohup ./openimapi &
+#nohup ./openimrpcuser &
 
 
