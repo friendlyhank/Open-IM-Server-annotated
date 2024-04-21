@@ -105,10 +105,19 @@ func newGinRouter(disCov discoveryregistry.SvcDiscoveryRegistry, config *config.
 	// 初始化rpc客户端
 	userRpc := rpcclient.NewUser(disCov, config)
 	u := NewUserApi(*userRpc)
+	authRpc := rpcclient.NewAuth(disCov, config)
 
+	// 用户相关
 	userRouterGroup := r.Group("/user")
 	{
 		userRouterGroup.POST("/user_register", u.UserRegister)
+	}
+
+	// 鉴权相关
+	authRouterGroup := r.Group("/auth")
+	{
+		a := NewAuthApi(*authRpc)
+		authRouterGroup.POST("/user_token", a.UserToken)
 	}
 
 	return r

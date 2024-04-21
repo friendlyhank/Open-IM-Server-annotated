@@ -3,6 +3,8 @@ package rpcclient
 import (
 	"context"
 
+	"github.com/OpenIMSDK/protocol/sdkws"
+
 	"google.golang.org/grpc"
 
 	"github.com/OpenIMSDK/protocol/user"
@@ -27,4 +29,27 @@ func NewUser(discov discoveryregistry.SvcDiscoveryRegistry, config *config.Globa
 	}
 	client := user.NewUserClient(conn)
 	return &User{Discov: discov, Client: client, conn: conn, Config: config}
+}
+
+// UserRpcClient represents the structure for a User RPC client.
+type UserRpcClient User
+
+// NewUserRpcClient initializes a UserRpcClient based on the provided service discovery registry.
+func NewUserRpcClient(client discoveryregistry.SvcDiscoveryRegistry, config *config.GlobalConfig) UserRpcClient {
+	return UserRpcClient(*NewUser(client, config))
+}
+
+func (u *UserRpcClient) GetUsersInfo(ctx context.Context, userIDs []string) ([]*sdkws.UserInfo, error) {
+	if len(userIDs) == 0 {
+		return []*sdkws.UserInfo{}, nil
+	}
+}
+
+// GetUserInfo retrieves information for a single user based on the provided user ID.
+func (u *UserRpcClient) GetUserInfo(ctx context.Context, userID string) (*sdkws.UserInfo, error) {
+	users, err := u.GetUsersInfo(ctx, []string{userID})
+	if err != nil {
+		return nil, err
+	}
+	return users[0], nil
 }
