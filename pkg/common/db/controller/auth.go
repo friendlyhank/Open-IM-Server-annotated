@@ -26,6 +26,7 @@ func (a authDatabase) GetTokensWithoutError(ctx context.Context, userID string, 
 	panic("implement me")
 }
 
+// CreateToken - 创建鉴权token信息
 func (a authDatabase) CreateToken(ctx context.Context, userID string, platformID int) (string, error) {
 	//TODO implement me
 	panic("implement me")

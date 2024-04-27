@@ -39,7 +39,7 @@ type userServer struct {
 
 // Start - 启动程序
 func Start(config *config.GlobalConfig, client registry.SvcDiscoveryRegistry, server *grpc.Server) error {
-	_, err := cache.NewRedis(config)
+	rdb, err := cache.NewRedis(config)
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,8 @@ func Start(config *config.GlobalConfig, client registry.SvcDiscoveryRegistry, se
 	if err != nil {
 		return err
 	}
-	database := controller.NewUserDatabase(userDB, tx.NewMongo(mongo.GetClient()))
+	cache := cache.NewUserCacheRedis(rdb, userDB, cache.GetDefaultOpt())
+	database := controller.NewUserDatabase(userDB, cache, tx.NewMongo(mongo.GetClient()))
 	u := &userServer{
 		UserDatabase: database,
 		config:       config,
@@ -67,6 +68,7 @@ func Start(config *config.GlobalConfig, client registry.SvcDiscoveryRegistry, se
 	return nil
 }
 
+// GetDesignateUsers - 批量获取用户信息
 func (s userServer) GetDesignateUsers(ctx context.Context, req *pbuser.GetDesignateUsersReq) (resp *pbuser.GetDesignateUsersResp, err error) {
 	resp = &pbuser.GetDesignateUsersResp{}
 	users, err := s.FindWithError(ctx, req.UserIDs)

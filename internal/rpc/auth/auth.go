@@ -42,6 +42,12 @@ func (s authServer) UserToken(ctx context.Context, req *pbauth.UserTokenReq) (*p
 	if _, err := s.userRpcClient.GetUserInfo(ctx, req.UserID); err != nil {
 		return nil, err
 	}
+	token, err := s.authDatabase.CreateToken(ctx, req.UserID, int(req.PlatformID))
+	if err != nil {
+		return nil, err
+	}
+	resp.Token = token
+	return &resp, nil
 }
 
 func (s authServer) GetUserToken(ctx context.Context, req *pbauth.GetUserTokenReq) (*pbauth.GetUserTokenResp, error) {

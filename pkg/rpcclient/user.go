@@ -2,6 +2,10 @@ package rpcclient
 
 import (
 	"context"
+	"strings"
+
+	"github.com/OpenIMSDK/tools/errs"
+	"github.com/OpenIMSDK/tools/utils"
 
 	"github.com/OpenIMSDK/protocol/sdkws"
 
@@ -43,6 +47,18 @@ func (u *UserRpcClient) GetUsersInfo(ctx context.Context, userIDs []string) ([]*
 	if len(userIDs) == 0 {
 		return []*sdkws.UserInfo{}, nil
 	}
+	resp, err := u.Client.GetDesignateUsers(ctx, &user.GetDesignateUsersReq{
+		UserIDs: userIDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if ids := utils.Single(userIDs, utils.Slice(resp.UsersInfo, func(e *sdkws.UserInfo) string {
+		return e.UserID
+	})); len(ids) > 0 {
+		return nil, errs.ErrUserIDNotFound.Wrap(strings.Join(ids, ","))
+	}
+	return resp.UsersInfo, nil
 }
 
 // GetUserInfo retrieves information for a single user based on the provided user ID.

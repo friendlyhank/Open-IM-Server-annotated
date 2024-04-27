@@ -50,8 +50,7 @@ func (u UserMgo) Find(ctx context.Context, userIDs []string) (users []*relation.
 }
 
 func (u UserMgo) Take(ctx context.Context, userID string) (user *relation.UserModel, err error) {
-	//TODO implement me
-	panic("implement me")
+	return mgoutil.FindOne[*relation.UserModel](ctx, u.coll, bson.M{"user_id": userID})
 }
 
 func (u UserMgo) TakeNotification(ctx context.Context, level int64) (user []*relation.UserModel, err error) {

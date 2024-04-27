@@ -11,6 +11,7 @@ require (
 	go.mongodb.org/mongo-driver v1.14.0
 	google.golang.org/grpc v1.56.2
 	gopkg.in/yaml.v3 v3.0.1
+	github.com/dtm-labs/rockscache v0.1.1
 )
 
 require (

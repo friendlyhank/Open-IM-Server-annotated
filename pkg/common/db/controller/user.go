@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/OpenIMSDK/tools/errs"
+
 	"github.com/OpenIMSDK/tools/tx"
 
 	"github.com/friendlyhank/open-im-server-annotated/v3/pkg/common/db/cache"
@@ -74,13 +76,19 @@ type userDatabase struct {
 	cache  cache.UserCache
 }
 
-func NewUserDatabase(userDB relation.UserModelInterface, tx tx.CtxTx) UserDatabase {
-	return &userDatabase{userDB: userDB, tx: tx}
+func NewUserDatabase(userDB relation.UserModelInterface, cache cache.UserCache, tx tx.CtxTx) UserDatabase {
+	return &userDatabase{userDB: userDB, cache: cache, tx: tx}
 }
 
 func (u userDatabase) FindWithError(ctx context.Context, userIDs []string) (users []*relation.UserModel, err error) {
-	//TODO implement me
-	panic("implement me")
+	users, err = u.cache.GetUsersInfo(ctx, userIDs)
+	if err != nil {
+		return
+	}
+	if len(users) != len(userIDs) {
+		err = errs.ErrRecordNotFound.Wrap("userID not found")
+	}
+	return
 }
 
 func (u userDatabase) Find(ctx context.Context, userIDs []string) (users []*relation.UserModel, err error) {
