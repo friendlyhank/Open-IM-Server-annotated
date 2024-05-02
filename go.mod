@@ -5,13 +5,14 @@ go 1.19
 require (
 	github.com/OpenIMSDK/protocol v0.0.55
 	github.com/OpenIMSDK/tools v0.0.37
+	github.com/dtm-labs/rockscache v0.1.1
 	github.com/gin-gonic/gin v1.9.1
+	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/redis/go-redis/v9 v9.2.1
 	github.com/spf13/cobra v1.7.0
 	go.mongodb.org/mongo-driver v1.14.0
 	google.golang.org/grpc v1.56.2
 	gopkg.in/yaml.v3 v3.0.1
-	github.com/dtm-labs/rockscache v0.1.1
 )
 
 require (
@@ -29,6 +30,7 @@ require (
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
+	github.com/google/uuid v1.5.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jinzhu/copier v0.3.5 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
@@ -39,6 +41,7 @@ require (
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible // indirect
 	github.com/lestrrat-go/strftime v1.0.6 // indirect
+	github.com/lithammer/shortuuid v3.0.0+incompatible // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect

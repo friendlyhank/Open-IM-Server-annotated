@@ -9,7 +9,6 @@ import (
 	"github.com/dtm-labs/rockscache"
 	"github.com/redis/go-redis/v9"
 
-	"github.com/OpenIMSDK/protocol/user"
 	relationtb "github.com/friendlyhank/open-im-server-annotated/v3/pkg/common/db/table/relation"
 )
 
@@ -21,13 +20,10 @@ const (
 )
 
 type UserCache interface {
+	// GetUserInfo - 从缓存获取用户信息
 	GetUserInfo(ctx context.Context, userID string) (userInfo *relationtb.UserModel, err error)
+	// GetUsersInfo - 批量从缓存获取用户信息
 	GetUsersInfo(ctx context.Context, userIDs []string) ([]*relationtb.UserModel, error)
-	DelUsersInfo(userIDs ...string) UserCache
-	GetUserGlobalRecvMsgOpt(ctx context.Context, userID string) (opt int, err error)
-	DelUsersGlobalRecvMsgOpt(userIDs ...string) UserCache
-	GetUserStatus(ctx context.Context, userIDs []string) ([]*user.OnlineStatus, error)
-	SetUserStatus(ctx context.Context, userID string, status, platformID int32) error
 }
 
 type UserCacheRedis struct {
@@ -63,31 +59,9 @@ func (u UserCacheRedis) GetUserInfo(ctx context.Context, userID string) (userInf
 }
 
 func (u UserCacheRedis) GetUsersInfo(ctx context.Context, userIDs []string) ([]*relationtb.UserModel, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (u UserCacheRedis) DelUsersInfo(userIDs ...string) UserCache {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (u UserCacheRedis) GetUserGlobalRecvMsgOpt(ctx context.Context, userID string) (opt int, err error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (u UserCacheRedis) DelUsersGlobalRecvMsgOpt(userIDs ...string) UserCache {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (u UserCacheRedis) GetUserStatus(ctx context.Context, userIDs []string) ([]*user.OnlineStatus, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (u UserCacheRedis) SetUserStatus(ctx context.Context, userID string, status, platformID int32) error {
-	//TODO implement me
-	panic("implement me")
+	return batchGetCache2(ctx, u.rcClient, u.expireTime, userIDs, func(userID string) string {
+		return u.getUserInfoKey(userID)
+	}, func(ctx context.Context, userID string) (*relationtb.UserModel, error) {
+		return u.userDB.Take(ctx, userID)
+	})
 }

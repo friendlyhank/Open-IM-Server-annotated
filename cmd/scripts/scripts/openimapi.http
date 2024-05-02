@@ -1,5 +1,8 @@
 
 
+# 接口文档
+# https://docs.openim.io/zh-Hans/restapi/apis/authenticationManagement/getToken
+
 ## 用户管理
 
 ### 导入注册用户
@@ -18,11 +21,19 @@ operationID: 1646445464564
   ]
 }
 
-###  群管理
-
-### 导入注册用户
-POST {{openim-api}}/user/user_register HTTP/1.1
+### 认证管理
+POST {{openim-api}}/auth/user_token HTTP/1.1
 Content-Type: application/json
+operationID: 1646445464564
+
+{
+  "secret": "openIM123",
+  "platformID": 3,
+  "userID": "11151515151"
+}
+
+
+###  群管理
 
 
 

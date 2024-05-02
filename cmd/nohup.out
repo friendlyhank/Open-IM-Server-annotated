@@ -1,0 +1,16 @@
+The directory of the configuration file to start the process: 
+The path of the configuration file to start the process: /Users/hank/go/src/github.com/friendlyhank/Open-IM-Server-annotated/config/config.yaml
+The path of the configuration file to start the process: /Users/hank/go/src/github.com/friendlyhank/Open-IM-Server-annotated/config/notification.yaml
+2024-05-02 18:05:57.211	[34mINFO[0m	[34m[PID:94119][0m	[34mapi[0m	[log/zk_logger.go:29]	zookeeper output	{"msg": "connected to 127.0.0.1:2181"}
+2024-05-02 18:05:57.246	[34mINFO[0m	[34m[PID:94119][0m	[34mapi[0m	[log/zk_logger.go:29]	zookeeper output	{"msg": "authenticated: id=72057827250929672, timeout=10000"}
+2024-05-02 18:05:57.247	[34mINFO[0m	[34m[PID:94119][0m	[34mapi[0m	[log/zk_logger.go:29]	zookeeper output	{"msg": "re-submitting `0` credentials after reconnect"}
+2024-05-02 18:05:57.253	[34mINFO[0m	[34m[PID:94119][0m	[34mapi[0m	[log/zk_logger.go:29]	zookeeper output	{"msg": "zk eventChan recv new event: {Type:EventSession State:StateHasSession Path: Err:<nil> Server:127.0.0.1:2181}"}
+2024-05-02 18:05:57.316	[34mINFO[0m	[34m[PID:94119][0m	[34mapi[0m	[log/zk_logger.go:29]	zookeeper output	{"msg": "get conn from client, serviceName: User"}
+2024-05-02 18:05:57.317	[34mINFO[0m	[34m[PID:94119][0m	[34mapi[0m	[log/zk_logger.go:29]	zookeeper output	{"msg": "build resolver: {Scheme:openim Authority: URL:{Scheme:openim Opaque: User: Host: Path:/User RawPath: OmitHost:false ForceQuery:false RawQuery: Fragment: RawFragment:}}, cc: 0x100721bb0"}
+2024-05-02 18:05:57.318	[31mERROR[0m	[31m[PID:94119][0m	[31mapi[0m	[zookeeper/resolver.go:50]	UpdateState error, conns is nil from svr	{"conns": null, "zk path": "/User", "error": "bad resolver state"}
+2024-05-02 18:05:57.319	[34mINFO[0m	[34m[PID:94119][0m	[34mapi[0m	[log/zk_logger.go:29]	zookeeper output	{"msg": "build resolver finished: {Scheme:openim Authority: URL:{Scheme:openim Opaque: User: Host: Path:/User RawPath: OmitHost:false ForceQuery:false RawQuery: Fragment: RawFragment:}}, cc: 0x100721bb0, key: User"}
+2024-05-02 18:05:57.319	[34mINFO[0m	[34m[PID:94119][0m	[34mapi[0m	[log/zk_logger.go:29]	zookeeper output	{"msg": "get conn from client, serviceName: Auth"}
+2024-05-02 18:05:57.319	[34mINFO[0m	[34m[PID:94119][0m	[34mapi[0m	[log/zk_logger.go:29]	zookeeper output	{"msg": "build resolver: {Scheme:openim Authority: URL:{Scheme:openim Opaque: User: Host: Path:/Auth RawPath: OmitHost:false ForceQuery:false RawQuery: Fragment: RawFragment:}}, cc: 0x100721bb0"}
+2024-05-02 18:05:57.320	[31mERROR[0m	[31m[PID:94119][0m	[31mapi[0m	[zookeeper/resolver.go:50]	UpdateState error, conns is nil from svr	{"conns": null, "zk path": "/Auth", "error": "bad resolver state"}
+2024-05-02 18:05:57.320	[34mINFO[0m	[34m[PID:94119][0m	[34mapi[0m	[log/zk_logger.go:29]	zookeeper output	{"msg": "build resolver finished: {Scheme:openim Authority: URL:{Scheme:openim Opaque: User: Host: Path:/Auth RawPath: OmitHost:false ForceQuery:false RawQuery: Fragment: RawFragment:}}, cc: 0x100721bb0, key: Auth"}
+Warning openimapi receive process terminal SIGTERM exit 0

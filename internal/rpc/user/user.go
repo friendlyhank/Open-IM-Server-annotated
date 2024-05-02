@@ -37,6 +37,36 @@ type userServer struct {
 	config *config.GlobalConfig // 配置信息
 }
 
+func (s userServer) UpdateUserInfo(ctx context.Context, req *pbuser.UpdateUserInfoReq) (*pbuser.UpdateUserInfoResp, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s userServer) UpdateUserInfoEx(ctx context.Context, req *pbuser.UpdateUserInfoExReq) (*pbuser.UpdateUserInfoExResp, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s userServer) SetGlobalRecvMessageOpt(ctx context.Context, req *pbuser.SetGlobalRecvMessageOptReq) (*pbuser.SetGlobalRecvMessageOptResp, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s userServer) GetGlobalRecvMessageOpt(ctx context.Context, req *pbuser.GetGlobalRecvMessageOptReq) (*pbuser.GetGlobalRecvMessageOptResp, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s userServer) AccountCheck(ctx context.Context, req *pbuser.AccountCheckReq) (*pbuser.AccountCheckResp, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s userServer) GetPaginationUsers(ctx context.Context, req *pbuser.GetPaginationUsersReq) (*pbuser.GetPaginationUsersResp, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 // Start - 启动程序
 func Start(config *config.GlobalConfig, client registry.SvcDiscoveryRegistry, server *grpc.Server) error {
 	rdb, err := cache.NewRedis(config)
@@ -77,36 +107,6 @@ func (s userServer) GetDesignateUsers(ctx context.Context, req *pbuser.GetDesign
 	}
 	resp.UsersInfo = convert.UsersDB2Pb(users)
 	return resp, nil
-}
-
-func (s userServer) UpdateUserInfo(ctx context.Context, req *pbuser.UpdateUserInfoReq) (*pbuser.UpdateUserInfoResp, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (s userServer) UpdateUserInfoEx(ctx context.Context, req *pbuser.UpdateUserInfoExReq) (*pbuser.UpdateUserInfoExResp, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (s userServer) SetGlobalRecvMessageOpt(ctx context.Context, req *pbuser.SetGlobalRecvMessageOptReq) (*pbuser.SetGlobalRecvMessageOptResp, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (s userServer) GetGlobalRecvMessageOpt(ctx context.Context, req *pbuser.GetGlobalRecvMessageOptReq) (*pbuser.GetGlobalRecvMessageOptResp, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (s userServer) AccountCheck(ctx context.Context, req *pbuser.AccountCheckReq) (*pbuser.AccountCheckResp, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (s userServer) GetPaginationUsers(ctx context.Context, req *pbuser.GetPaginationUsersReq) (*pbuser.GetPaginationUsersResp, error) {
-	//TODO implement me
-	panic("implement me")
 }
 
 // UserRegister - 用户注册接口

@@ -140,6 +140,12 @@ manager:
 # Secret key
 secret: openIM123
 
+# Token policy
+#
+# Token expiration period in days
+tokenPolicy:
+  expire: 90
+
 ###################### Prometheus ######################
 # Prometheus configuration for various services
 # The number of Prometheus ports per service needs to correspond to rpcPort

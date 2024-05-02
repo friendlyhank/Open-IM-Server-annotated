@@ -93,7 +93,10 @@ type GlobalConfig struct {
 		Nickname []string `yaml:"nickname"`
 	} `yaml:"im-admin"`
 
-	Secret     string `yaml:"secret"`
+	Secret      string   `yaml:"secret"`
+	TokenPolicy struct { // 生成token配置
+		Expire int64 `yaml:"expire"`
+	} `yaml:"tokenPolicy"`
 	Prometheus struct {
 		Enable                        bool   `yaml:"enable"`
 		GrafanaUrl                    string `yaml:"grafanaUrl"` // grafana地址

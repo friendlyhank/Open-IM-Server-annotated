@@ -3,6 +3,8 @@ package auth
 import (
 	"context"
 
+	"github.com/friendlyhank/open-im-server-annotated/v3/pkg/common/db/cache"
+
 	"github.com/OpenIMSDK/tools/errs"
 
 	"github.com/friendlyhank/open-im-server-annotated/v3/pkg/common/db/controller"
@@ -21,15 +23,20 @@ type authServer struct {
 }
 
 func Start(config *config.GlobalConfig, client discoveryregistry.SvcDiscoveryRegistry, server *grpc.Server) error {
-	//rdb, err := cache.NewRedis(config)
-	//if err != nil {
-	//	return err
-	//}
+	rdb, err := cache.NewRedis(config)
+	if err != nil {
+		return err
+	}
 	userRpcClient := rpcclient.NewUserRpcClient(client, config)
 	pbauth.RegisterAuthServer(server, &authServer{
 		userRpcClient: &userRpcClient,
 		config:        config,
-		authDatabase:  controller.NewAuthDatabase(config),
+		authDatabase: controller.NewAuthDatabase(
+			cache.NewMsgCacheModel(rdb, config),
+			config.Secret,
+			config.TokenPolicy.Expire,
+			config,
+		),
 	})
 	return nil
 }
@@ -47,6 +54,7 @@ func (s authServer) UserToken(ctx context.Context, req *pbauth.UserTokenReq) (*p
 		return nil, err
 	}
 	resp.Token = token
+	resp.ExpireTimeSeconds = s.config.TokenPolicy.Expire * 24 * 60 * 60
 	return &resp, nil
 }
 
